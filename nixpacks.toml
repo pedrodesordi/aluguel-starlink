@@ -1,3 +1,6 @@
+[providers]
+  python = { version = "3.11" }
+
 [phases.setup]
 nixPkgs = ["pango", "cairo", "gdk-pixbuf", "gobject-introspection", "shared-mime-info", "fontconfig", "zlib"]
 
