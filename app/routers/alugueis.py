@@ -170,7 +170,37 @@ def editar(
         "observacoes": observacoes or None,
     }).eq("id", id).execute()
 
+    # Recriar pagamentos não pagos (exceto multas já lançadas)
+    db.table("pagamentos").delete().eq("aluguel_id", id).in_("status", ["pendente", "vencido"]).neq("tipo", "multa").execute()
+    aluguel_atualizado = db.table("alugueis").select("*").eq("id", id).execute().data[0]
+    if modalidade == "mensal":
+        gerar_parcelas_mensais(aluguel_atualizado, db)
+    else:
+        gerar_pagamento_diaria(aluguel_atualizado, db)
+
     _flash(request, "success", "Aluguel atualizado!")
+    return RedirectResponse(f"/alugueis/{id}", status_code=303)
+
+
+@router.post("/{id}/cancelar")
+def cancelar(
+    id: str, request: Request,
+    motivo: str = Form(...),
+    user: dict = Depends(get_current_user), db: Client = Depends(get_db),
+):
+    aluguel = db.table("alugueis").select("equipamento_id,observacoes").eq("id", id).execute().data[0]
+
+    db.table("pagamentos").delete().eq("aluguel_id", id).execute()
+
+    db.table("termos_responsabilidade").update({"status": "expirado"}).eq("aluguel_id", id).eq("status", "pendente").execute()
+
+    obs_atual = aluguel.get("observacoes") or ""
+    nova_obs = f"{obs_atual}\n[Cancelado] {motivo}".strip()
+    db.table("alugueis").update({"status": "cancelado", "observacoes": nova_obs}).eq("id", id).execute()
+
+    db.table("equipamentos").update({"status": "disponivel"}).eq("id", aluguel["equipamento_id"]).execute()
+
+    _flash(request, "success", "Aluguel cancelado.")
     return RedirectResponse(f"/alugueis/{id}", status_code=303)
 
 

@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Dashboard — Aluguel Starlink{% endblock %}
+{% block head_extra %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+{% endblock %}
 {% block content %}
 <h4 class="mb-4"><i class="bi bi-speedometer2"></i> Dashboard</h4>
 
@@ -76,6 +79,16 @@
       </div>
     </div>
   </div>
+  <div class="col-6 col-md-3">
+    <a href="/reservas/" class="text-decoration-none">
+      <div class="card border-0 bg-light h-100">
+        <div class="card-body text-center">
+          <div class="small text-muted">Reservas pendentes</div>
+          <div class="fs-3 fw-bold text-primary">{{ stats.reservas_pendentes }}</div>
+        </div>
+      </div>
+    </a>
+  </div>
   {% endif %}
 </div>
 
@@ -117,6 +130,15 @@
 </div>
 {% endif %}
 
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white fw-bold">
+    <i class="bi bi-calendar3"></i> Calendário de aluguéis e reservas
+  </div>
+  <div class="card-body">
+    <div id="calendario"></div>
+  </div>
+</div>
+
 <div class="card border-0 shadow-sm">
   <div class="card-header bg-white fw-bold">
     <i class="bi bi-clock-history"></i> Aluguéis ativos / em atraso
@@ -149,4 +171,24 @@
     </div>
   </div>
 </div>
+
+{% block scripts_extra %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales/pt-br.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const cal = new FullCalendar.Calendar(document.getElementById('calendario'), {
+    initialView: 'dayGridMonth',
+    locale: 'pt-br',
+    height: 'auto',
+    headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
+    events: {{ eventos_json | safe }},
+    eventClick: function(info) {
+      if (info.event.url) { info.jsEvent.preventDefault(); window.location.href = info.event.url; }
+    },
+  });
+  cal.render();
+});
+</script>
+{% endblock %}
 {% endblock %}

@@ -5,6 +5,16 @@
   <a href="/alugueis/" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
   <h4 class="mb-0">Detalhe do Aluguel</h4>
   <span class="badge status-{{ aluguel.status }} ms-2 fs-6">{{ aluguel.status | title }}</span>
+  {% if aluguel.status in ['ativo', 'atrasado'] %}
+  <div class="ms-auto d-flex gap-2">
+    <a href="/alugueis/{{ aluguel.id }}/editar" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-pencil"></i> Editar
+    </a>
+    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalCancelar">
+      <i class="bi bi-x-circle"></i> Cancelar
+    </button>
+  </div>
+  {% endif %}
 </div>
 
 <div class="row g-3 mb-4">
@@ -94,7 +104,7 @@
   <div class="table-responsive">
     <table class="table table-hover mb-0">
       <thead class="table-light">
-        <tr><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Tipo</th><th>Status</th></tr>
+        <tr><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Tipo</th><th>Forma</th><th>Status</th></tr>
       </thead>
       <tbody>
         {% for p in pagamentos %}
@@ -103,30 +113,107 @@
           <td>{{ p.data_vencimento | data_br }}</td>
           <td>{{ p.valor | brl }}</td>
           <td>{{ p.tipo | title }}</td>
+          <td class="text-muted small">
+            {% if p.forma_pagamento == 'pix' %}PIX
+            {% elif p.forma_pagamento == 'cartao' %}Cartão
+            {% elif p.forma_pagamento == 'dinheiro' %}Dinheiro
+            {% else %}—{% endif %}
+          </td>
           <td id="status-pag-{{ p.id }}">
             <span class="badge status-pag-{{ p.status }}">{{ p.status | title }}</span>
             {% if p.status in ['pendente','vencido'] and user.perfil == 'admin' %}
             <button class="btn btn-xs btn-outline-success ms-1"
-                    hx-post="/financeiro/pagamentos/{{ p.id }}/pagar"
-                    hx-target="#status-pag-{{ p.id }}"
-                    hx-swap="innerHTML">
+                    data-bs-toggle="modal" data-bs-target="#modalPagar"
+                    data-pag-id="{{ p.id }}" data-pag-target="status-pag-{{ p.id }}">
               <i class="bi bi-check2"></i> Pagar
+            </button>
+            {% endif %}
+            {% if p.status == 'pago' and user.perfil == 'admin' %}
+            <button class="btn btn-xs btn-outline-warning ms-1"
+                    hx-post="/financeiro/pagamentos/{{ p.id }}/estornar"
+                    hx-target="#status-pag-{{ p.id }}"
+                    hx-swap="innerHTML"
+                    hx-confirm="Reverter pagamento para aberto?">
+              <i class="bi bi-arrow-counterclockwise"></i>
             </button>
             {% endif %}
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="5" class="text-center text-muted py-3">Nenhum pagamento</td></tr>
+        <tr><td colspan="6" class="text-center text-muted py-3">Nenhum pagamento</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
 
+<div class="modal fade" id="modalPagar" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title"><i class="bi bi-check-circle"></i> Registrar Pagamento</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label">Forma de pagamento</label>
+        <select id="forma_pag_select" class="form-select">
+          <option value="pix">PIX</option>
+          <option value="cartao">Cartão</option>
+          <option value="dinheiro">Dinheiro</option>
+        </select>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+        <button id="btn_confirmar_pagar" class="btn btn-success btn-sm"
+                hx-post="" hx-target="" hx-swap="innerHTML"
+                data-bs-dismiss="modal">
+          <i class="bi bi-check2"></i> Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if aluguel.status in ['ativo', 'atrasado'] %}
+<div class="modal fade" id="modalCancelar" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger"><i class="bi bi-x-circle"></i> Cancelar Aluguel</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="/alugueis/{{ aluguel.id }}/cancelar">
+        <div class="modal-body">
+          <p class="text-muted small">Pagamentos pendentes serão removidos e o equipamento ficará disponível.</p>
+          <label class="form-label fw-semibold">Motivo do cancelamento <span class="text-danger">*</span></label>
+          <textarea name="motivo" class="form-control" rows="3" required
+                    placeholder="Ex: Cliente desistiu, encontrou outra solução..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
+          <button type="submit" class="btn btn-danger"><i class="bi bi-x-circle"></i> Confirmar cancelamento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <script>
 function copiarLink() {
   const el = document.getElementById('link_termo');
   navigator.clipboard.writeText(el.value).then(() => alert('Link copiado!'));
 }
+
+document.getElementById('modalPagar').addEventListener('show.bs.modal', function(e) {
+  const btn = e.relatedTarget;
+  const pagId = btn.dataset.pagId;
+  const pagTarget = btn.dataset.pagTarget;
+  const confirmBtn = document.getElementById('btn_confirmar_pagar');
+  confirmBtn.setAttribute('hx-post', `/financeiro/pagamentos/${pagId}/pagar`);
+  confirmBtn.setAttribute('hx-target', `#${pagTarget}`);
+  confirmBtn.setAttribute('hx-include', '#forma_pag_select');
+  htmx.process(confirmBtn);
+});
 </script>
 {% endblock %}

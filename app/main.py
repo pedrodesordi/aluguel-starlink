@@ -10,7 +10,7 @@ from starlette.responses import RedirectResponse
 from app.auth import NaoAutenticado, SemPermissao
 from app.config import get_settings
 from app.database import get_db
-from app.routers import auth, dashboard, clientes, equipamentos, alugueis, financeiro, termos, configuracoes, admin
+from app.routers import auth, dashboard, clientes, equipamentos, alugueis, financeiro, termos, configuracoes, admin, reservas
 from app.templates_config import templates
 
 
@@ -22,6 +22,7 @@ async def daily_status_update():
             hoje = str(date.today())
             db.table("alugueis").update({"status": "atrasado"}).eq("status", "ativo").lt("data_fim_prevista", hoje).execute()
             db.table("pagamentos").update({"status": "vencido"}).eq("status", "pendente").lt("data_vencimento", hoje).execute()
+            db.rpc("sync_status_equipamentos_hoje").execute()
         except Exception as e:
             print(f"[status-update] erro: {e}")
 
@@ -46,6 +47,7 @@ app.include_router(financeiro.router, prefix="/financeiro")
 app.include_router(termos.router, prefix="/termos")
 app.include_router(configuracoes.router, prefix="/configuracoes")
 app.include_router(admin.router, prefix="/admin")
+app.include_router(reservas.router)
 
 
 @app.exception_handler(NaoAutenticado)

@@ -43,13 +43,43 @@ def listar(
 @router.post("/pagamentos/{id}/pagar", response_class=HTMLResponse)
 def marcar_pago(
     id: str, request: Request,
+    forma_pagamento: str = Form(None),
     user: dict = Depends(require_admin), db: Client = Depends(get_db),
 ):
-    db.table("pagamentos").update({"status": "pago", "data_pagamento": str(date.today())}).eq("id", id).execute()
-    pag = db.table("pagamentos").select("*").eq("id", id).execute().data[0]
-    # Retorna HTML parcial para HTMX atualizar a linha
-    badge = '<span class="badge bg-success">Pago</span>'
-    return HTMLResponse(badge)
+    update_data: dict = {"status": "pago", "data_pagamento": str(date.today())}
+    if forma_pagamento:
+        update_data["forma_pagamento"] = forma_pagamento
+    db.table("pagamentos").update(update_data).eq("id", id).execute()
+    forma_labels = {"pix": "PIX", "cartao": "Cartão", "dinheiro": "Dinheiro"}
+    forma_label = forma_labels.get(forma_pagamento or "", "")
+    extra = f' <span class="text-muted small">{forma_label}</span>' if forma_label else ""
+    estornar = (
+        f'<button class="btn btn-xs btn-outline-warning ms-1"'
+        f' hx-post="/financeiro/pagamentos/{id}/estornar"'
+        f' hx-target="#status-pag-{id}" hx-swap="innerHTML"'
+        f' hx-confirm="Reverter pagamento para aberto?">'
+        f'<i class="bi bi-arrow-counterclockwise"></i></button>'
+    )
+    return HTMLResponse(f'<span class="badge bg-success">Pago</span>{extra}{estornar}')
+
+
+@router.post("/pagamentos/{id}/estornar", response_class=HTMLResponse)
+def estornar_pagamento(
+    id: str, request: Request,
+    user: dict = Depends(require_admin), db: Client = Depends(get_db),
+):
+    db.table("pagamentos").update({
+        "status": "pendente",
+        "data_pagamento": None,
+        "forma_pagamento": None,
+    }).eq("id", id).execute()
+    pagar_btn = (
+        f'<button class="btn btn-xs btn-outline-success ms-1"'
+        f' data-bs-toggle="modal" data-bs-target="#modalPagar"'
+        f' data-pag-id="{id}" data-pag-target="status-pag-{id}">'
+        f'<i class="bi bi-check2"></i> Pagar</button>'
+    )
+    return HTMLResponse(f'<span class="badge status-pag-pendente">Pendente</span>{pagar_btn}')
 
 
 @router.get("/relatorio")

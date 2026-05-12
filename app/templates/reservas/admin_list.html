@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Reservas{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h4><i class="bi bi-calendar2-check"></i> Reservas</h4>
+</div>
+
+{% if novo_link %}
+<div class="alert alert-success d-flex align-items-center gap-2" id="alerta-link">
+  <i class="bi bi-link-45deg fs-5"></i>
+  <div class="flex-grow-1">
+    <strong>Link gerado!</strong> Copie e envie ao cliente:
+    <div class="input-group mt-1">
+      <input type="text" class="form-control form-control-sm" id="link-gerado"
+             value="{{ request.base_url }}reservar/{{ novo_link }}" readonly>
+      <button class="btn btn-outline-success btn-sm" onclick="copiarLink()">
+        <i class="bi bi-clipboard"></i> Copiar
+      </button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if flash %}
+<div class="alert alert-{{ flash.tipo }} py-2">{{ flash.msg }}</div>
+{% endif %}
+
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Equipamento</th><th>Cliente</th><th>Período</th>
+          <th>Retirada prevista</th><th>Plano</th><th>Valor</th>
+          <th>Status</th><th>Expira em</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reservas %}
+        <tr>
+          <td>
+            {{ r.equipamentos.modelo if r.equipamentos else '—' }}<br>
+            <small class="text-muted">{{ r.equipamentos.numero_serie if r.equipamentos else '' }}</small>
+          </td>
+          <td>
+            {% if r.nome_cliente %}
+              {{ r.nome_cliente }}<br>
+              <small class="text-muted">{{ r.cpf_cliente or '' }} {{ r.telefone_cliente or '' }}</small>
+            {% else %}
+              <span class="text-muted fst-italic">Aguardando</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if r.data_inicio %}
+              {{ r.data_inicio | data_br }} → {{ r.data_fim_prevista | data_br }}
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if r.previsao_retirada %}
+              {{ r.previsao_retirada[:16] | replace("T", " ") }}h
+            {% else %}—{% endif %}
+          </td>
+          <td>{{ r.tipo_plano or '—' }}</td>
+          <td>{{ r.valor_total_previsto | brl if r.valor_total_previsto else '—' }}</td>
+          <td>
+            {% if r.status == 'aguardando' %}
+              <span class="badge bg-secondary">Aguardando</span>
+            {% elif r.status == 'preenchida' %}
+              <span class="badge bg-warning text-dark">Preenchida</span>
+            {% elif r.status == 'confirmada' %}
+              <span class="badge bg-success">Confirmada</span>
+            {% elif r.status == 'expirada' %}
+              <span class="badge bg-light text-muted">Expirada</span>
+            {% elif r.status == 'cancelada' %}
+              <span class="badge bg-danger">Cancelada</span>
+            {% endif %}
+          </td>
+          <td class="small text-muted">
+            {{ r.expira_em[:16] | replace("T", " ") if r.expira_em else '—' }}
+          </td>
+          <td>
+            {% if r.status == 'preenchida' %}
+            <form method="post" action="/reservas/{{ r.id }}/confirmar" class="d-inline">
+              <button class="btn btn-xs btn-success" onclick="return confirm('Confirmar e criar aluguel?')">
+                <i class="bi bi-check-lg"></i> Confirmar
+              </button>
+            </form>
+            <form method="post" action="/reservas/{{ r.id }}/cancelar" class="d-inline ms-1">
+              <button class="btn btn-xs btn-outline-danger" onclick="return confirm('Cancelar reserva?')">
+                <i class="bi bi-x"></i>
+              </button>
+            </form>
+            {% elif r.status == 'confirmada' and r.aluguel_id %}
+            <a href="/alugueis/{{ r.aluguel_id }}" class="btn btn-xs btn-outline-secondary">
+              <i class="bi bi-eye"></i> Aluguel
+            </a>
+            {% endif %}
+            {% if r.status not in ['expirada'] %}
+            <form method="post" action="/reservas/{{ r.id }}/excluir" class="d-inline ms-1">
+              <button class="btn btn-xs btn-danger" onclick="return confirm('Excluir esta reserva permanentemente?')">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" class="text-center text-muted py-3">Nenhuma reserva</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function copiarLink() {
+  const el = document.getElementById('link-gerado');
+  navigator.clipboard.writeText(el.value).then(() => {
+    el.select();
+    alert('Link copiado!');
+  });
+}
+</script>
+{% endblock %}
