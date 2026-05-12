@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from supabase import Client
 
 from app.auth import hash_password, require_admin
@@ -8,7 +8,6 @@ from app.database import get_db
 from app.schemas.usuario import UsuarioCreate
 
 router = APIRouter(tags=["admin"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 def _flash(request: Request, tipo: str, msg: str):

@@ -32,7 +32,7 @@
       <thead class="table-light">
         <tr>
           <th>Nº Série</th><th>Nº Starlink</th><th>Modelo</th><th>Plano</th>
-          <th>Venc. Mensalidade</th><th>Status</th>
+          <th>Venc. Mensal.</th><th>Status</th>
           {% if user.perfil == 'admin' %}<th></th>{% endif %}
         </tr>
       </thead>
@@ -45,7 +45,7 @@
           <td>{{ e.tipo_plano or '—' }}</td>
           <td>
             {% if e.vencimento_mensalidade %}
-              {{ e.vencimento_mensalidade | data_br }}
+              Dia {{ e.vencimento_mensalidade }}
             {% else %}—{% endif %}
           </td>
           <td><span class="badge status-{{ e.status }}">{{ e.status | title }}</span></td>

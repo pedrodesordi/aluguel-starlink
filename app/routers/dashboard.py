@@ -1,18 +1,18 @@
 from fastapi import APIRouter, Depends, Request
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from supabase import Client
 
 from app.auth import get_current_user
 from app.database import get_db
-from app.services.financeiro_service import get_dashboard_stats
+from app.services.financeiro_service import get_dashboard_stats, get_vencimentos_proximos
 
 router = APIRouter(tags=["dashboard"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/")
 def dashboard(request: Request, user: dict = Depends(get_current_user), db: Client = Depends(get_db)):
     stats = get_dashboard_stats(db)
+    vencimentos = get_vencimentos_proximos(db, dias=10)
     alugueis_recentes = (
         db.table("alugueis")
         .select("id,status,data_inicio,data_fim_prevista,clientes(nome),equipamentos(modelo,numero_serie)")
@@ -28,5 +28,6 @@ def dashboard(request: Request, user: dict = Depends(get_current_user), db: Clie
         "user": user,
         "stats": stats,
         "alugueis_recentes": alugueis_recentes,
+        "vencimentos": vencimentos,
         "flash": flash,
     })

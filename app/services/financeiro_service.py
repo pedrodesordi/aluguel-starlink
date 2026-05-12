@@ -47,3 +47,31 @@ def gerar_pagamento_diaria(aluguel: dict, db: Client) -> None:
 def get_dashboard_stats(db: Client) -> dict:
     res = db.rpc("get_dashboard_stats").execute()
     return res.data if res.data else {}
+
+
+def get_vencimentos_proximos(db: Client, dias: int = 10) -> list:
+    hoje = date.today()
+    dia_hoje = hoje.day
+
+    res = (
+        db.table("equipamentos")
+        .select("id,modelo,numero_serie,tipo_plano,vencimento_mensalidade,status")
+        .not_.is_("vencimento_mensalidade", "null")
+        .neq("status", "baixado")
+        .execute()
+    )
+
+    resultado = []
+    for e in res.data:
+        dia_venc = e["vencimento_mensalidade"]
+        if dia_venc >= dia_hoje:
+            dias_faltam = dia_venc - dia_hoje
+        else:
+            ultimo_dia = calendar.monthrange(hoje.year, hoje.month)[1]
+            dias_faltam = (ultimo_dia - dia_hoje) + dia_venc
+
+        if dias_faltam <= dias:
+            e["dias_faltam"] = dias_faltam
+            resultado.append(e)
+
+    return sorted(resultado, key=lambda x: x["dias_faltam"])

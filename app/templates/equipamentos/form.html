@@ -35,16 +35,14 @@
           <input type="text" name="tipo_plano" class="form-control" value="{{ equipamento.tipo_plano or '' }}" placeholder="Ex: ILIMITADO, 100GB">
         </div>
         <div class="col-md-6">
-          <label class="form-label">Vencimento da Mensalidade</label>
-          <input type="date" name="vencimento_mensalidade" class="form-control" value="{{ equipamento.vencimento_mensalidade or '' }}">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Data de Aquisição</label>
-          <input type="date" name="data_aquisicao" class="form-control" value="{{ equipamento.data_aquisicao or '' }}">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Valor de Aquisição (R$)</label>
-          <input type="number" step="0.01" name="valor_aquisicao" class="form-control" value="{{ equipamento.valor_aquisicao or '' }}">
+          <label class="form-label">Dia de vencimento da mensalidade</label>
+          <select name="vencimento_mensalidade" class="form-select">
+            <option value="0">Não informado</option>
+            {% for d in range(1, 32) %}
+            <option value="{{ d }}" {{ 'selected' if equipamento.vencimento_mensalidade == d }}>Dia {{ d }}</option>
+            {% endfor %}
+          </select>
+          <div class="form-text">Dia do mês em que o plano Starlink renova.</div>
         </div>
         <div class="col-12">
           <label class="form-label">Descrição / Observações</label>

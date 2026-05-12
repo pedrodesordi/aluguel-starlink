@@ -2,7 +2,7 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from pydantic import ValidationError
 from supabase import Client
 
@@ -13,7 +13,6 @@ from app.services.aluguel_service import calcular_multa_corrente, calcular_valor
 from app.services.financeiro_service import gerar_pagamento_diaria, gerar_parcelas_mensais
 
 router = APIRouter(tags=["alugueis"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 def _flash(request: Request, tipo: str, msg: str):

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from pydantic import ValidationError
 from supabase import Client
 
@@ -9,7 +9,6 @@ from app.database import get_db
 from app.schemas.equipamento import EquipamentoCreate
 
 router = APIRouter(tags=["equipamentos"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 def _flash(request: Request, tipo: str, msg: str):
@@ -44,18 +43,16 @@ def criar(
     request: Request,
     numero_serie: str = Form(...), numero_starlink: str = Form(""),
     modelo: str = Form(...), tipo_plano: str = Form(""),
-    vencimento_mensalidade: str = Form(""), status: str = Form("disponivel"),
-    descricao: str = Form(""), data_aquisicao: str = Form(""),
-    valor_aquisicao: str = Form(""),
+    vencimento_mensalidade: int = Form(0), status: str = Form("disponivel"),
+    descricao: str = Form(""),
     user: dict = Depends(require_admin), db: Client = Depends(get_db),
 ):
     try:
         data = EquipamentoCreate(
             numero_serie=numero_serie, numero_starlink=numero_starlink or None,
             modelo=modelo, tipo_plano=tipo_plano or None,
-            vencimento_mensalidade=vencimento_mensalidade or None, status=status,
-            descricao=descricao or None, data_aquisicao=data_aquisicao or None,
-            valor_aquisicao=float(valor_aquisicao) if valor_aquisicao else None,
+            vencimento_mensalidade=vencimento_mensalidade if vencimento_mensalidade else None,
+            status=status, descricao=descricao or None,
         )
     except (ValidationError, ValueError) as e:
         erros = {}
@@ -85,9 +82,8 @@ def editar(
     id: str, request: Request,
     numero_serie: str = Form(...), numero_starlink: str = Form(""),
     modelo: str = Form(...), tipo_plano: str = Form(""),
-    vencimento_mensalidade: str = Form(""), status: str = Form("disponivel"),
-    descricao: str = Form(""), data_aquisicao: str = Form(""),
-    valor_aquisicao: str = Form(""),
+    vencimento_mensalidade: int = Form(0), status: str = Form("disponivel"),
+    descricao: str = Form(""),
     user: dict = Depends(require_admin), db: Client = Depends(get_db),
 ):
     payload = {
@@ -95,11 +91,9 @@ def editar(
         "numero_starlink": numero_starlink or None,
         "modelo": modelo,
         "tipo_plano": tipo_plano or None,
-        "vencimento_mensalidade": vencimento_mensalidade or None,
+        "vencimento_mensalidade": vencimento_mensalidade if vencimento_mensalidade else None,
         "status": status,
         "descricao": descricao or None,
-        "data_aquisicao": data_aquisicao or None,
-        "valor_aquisicao": float(valor_aquisicao) if valor_aquisicao else None,
     }
     db.table("equipamentos").update({k: v for k, v in payload.items() if v is not None}).eq("id", id).execute()
     _flash(request, "success", "Equipamento atualizado!")

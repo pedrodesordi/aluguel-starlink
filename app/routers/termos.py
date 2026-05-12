@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import FileResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from supabase import Client
 
 from app.database import get_db
 from app.services.termo_service import registrar_aceite
 
 router = APIRouter(tags=["termos"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/{token}")

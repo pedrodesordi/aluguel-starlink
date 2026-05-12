@@ -4,7 +4,6 @@ from datetime import date
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import RedirectResponse
 
@@ -12,20 +11,7 @@ from app.auth import NaoAutenticado, SemPermissao
 from app.config import get_settings
 from app.database import get_db
 from app.routers import auth, dashboard, clientes, equipamentos, alugueis, financeiro, termos, configuracoes, admin
-
-
-def format_brl(value) -> str:
-    if value is None:
-        return "R$ 0,00"
-    return f"R$ {float(value):_.2f}".replace(".", ",").replace("_", ".")
-
-
-def format_date_br(value) -> str:
-    if not value:
-        return ""
-    if isinstance(value, str):
-        value = date.fromisoformat(value)
-    return value.strftime("%d/%m/%Y")
+from app.templates_config import templates
 
 
 async def daily_status_update():
@@ -50,10 +36,6 @@ settings = get_settings()
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
 app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
-templates = Jinja2Templates(directory="app/templates")
-templates.env.filters["brl"] = format_brl
-templates.env.filters["data_br"] = format_date_br
 
 app.include_router(auth.router)
 app.include_router(dashboard.router)

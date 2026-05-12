@@ -1,5 +1,5 @@
 from __future__ import annotations
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class EquipamentoCreate(BaseModel):
@@ -7,11 +7,16 @@ class EquipamentoCreate(BaseModel):
     numero_starlink: str | None = None
     modelo: str
     tipo_plano: str | None = None
-    vencimento_mensalidade: str | None = None
+    vencimento_mensalidade: int | None = None
     status: str = "disponivel"
     descricao: str | None = None
-    data_aquisicao: str | None = None
-    valor_aquisicao: float | None = None
+
+    @field_validator("vencimento_mensalidade")
+    @classmethod
+    def dia_valido(cls, v: int | None) -> int | None:
+        if v is not None and not (1 <= v <= 31):
+            raise ValueError("Dia deve ser entre 1 e 31")
+        return v
 
 
 class EquipamentoUpdate(BaseModel):
@@ -19,8 +24,6 @@ class EquipamentoUpdate(BaseModel):
     numero_starlink: str | None = None
     modelo: str | None = None
     tipo_plano: str | None = None
-    vencimento_mensalidade: str | None = None
+    vencimento_mensalidade: int | None = None
     status: str | None = None
     descricao: str | None = None
-    data_aquisicao: str | None = None
-    valor_aquisicao: float | None = None

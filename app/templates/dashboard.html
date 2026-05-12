@@ -79,6 +79,43 @@
   {% endif %}
 </div>
 
+{% if vencimentos %}
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white fw-bold">
+    <i class="bi bi-calendar-check"></i> Mensalidades vencendo nos próximos 10 dias
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Equipamento</th><th>Nº Série</th><th>Plano</th><th>Status</th><th>Dia venc.</th><th>Faltam</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in vencimentos %}
+        <tr class="{{ 'table-danger' if e.dias_faltam <= 2 else ('table-warning' if e.dias_faltam <= 5 else '') }}">
+          <td>{{ e.modelo }}</td>
+          <td><code>{{ e.numero_serie }}</code></td>
+          <td>{{ e.tipo_plano or '—' }}</td>
+          <td><span class="badge status-{{ e.status }}">{{ e.status | title }}</span></td>
+          <td>Dia {{ e.vencimento_mensalidade }}</td>
+          <td>
+            {% if e.dias_faltam == 0 %}
+              <span class="badge bg-danger">Hoje!</span>
+            {% elif e.dias_faltam == 1 %}
+              <span class="badge bg-danger">Amanhã</span>
+            {% else %}
+              <span class="badge bg-secondary">{{ e.dias_faltam }} dias</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
 <div class="card border-0 shadow-sm">
   <div class="card-header bg-white fw-bold">
     <i class="bi bi-clock-history"></i> Aluguéis ativos / em atraso

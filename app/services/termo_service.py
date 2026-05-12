@@ -2,10 +2,9 @@ from __future__ import annotations
 import os
 from datetime import datetime, timezone
 
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from supabase import Client
 
-templates = Jinja2Templates(directory="app/templates")
 
 
 def registrar_aceite(token: str, ip: str, user_agent: str, db: Client) -> dict:

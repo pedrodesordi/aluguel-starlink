@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from pydantic import ValidationError
 from supabase import Client
 
@@ -9,7 +9,6 @@ from app.database import get_db
 from app.schemas.faixa_preco import FaixaPrecoCreate
 
 router = APIRouter(tags=["configuracoes"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 def _flash(request: Request, tipo: str, msg: str):
