@@ -9,7 +9,7 @@ from supabase import Client
 from app.auth import get_current_user
 from app.database import get_db
 from app.schemas.aluguel import AluguelCreate
-from app.services.aluguel_service import calcular_multa_corrente, calcular_valor_diaria, devolver_aluguel
+from app.services.aluguel_service import calcular_multa_corrente, calcular_valor_diaria, devolver_aluguel, tem_pacote_exato
 from app.services.financeiro_service import gerar_pagamento_diaria, gerar_parcelas_mensais
 
 router = APIRouter(tags=["alugueis"])
@@ -55,9 +55,20 @@ def novo_form(request: Request, user: dict = Depends(get_current_user), db: Clie
 
 @router.get("/calcular-diaria", response_class=HTMLResponse)
 def calcular_diaria(dias: int = Query(...), tipo_plano: str = Query("100GB"), user: dict = Depends(get_current_user), db: Client = Depends(get_db)):
+    total_pacote = tem_pacote_exato(dias, db, tipo_plano)
+    if total_pacote is not None:
+        valor_dia = total_pacote / dias
+        return (
+            f'<span class="text-success fw-bold">Pacote {dias} dias = R$ {total_pacote:.2f} total</span>'
+            f' <input type="hidden" name="_valor_sugerido" value="{valor_dia:.2f}">'
+        )
     valor = calcular_valor_diaria(dias, db, tipo_plano)
     if valor:
-        return f'<span class="text-success fw-bold">R$ {float(valor):.2f}/dia</span> <input type="hidden" name="_valor_sugerido" value="{float(valor)}">'
+        total = float(valor) * dias
+        return (
+            f'<span class="text-success fw-bold">R$ {float(valor):.2f}/dia = R$ {total:.2f} total</span>'
+            f' <input type="hidden" name="_valor_sugerido" value="{float(valor):.2f}">'
+        )
     return '<span class="text-warning">Nenhuma faixa cadastrada para este período</span>'
 
 
@@ -109,6 +120,58 @@ def criar(
 
     _flash(request, "success", "Aluguel criado com sucesso! Envie o link do termo ao cliente.")
     return RedirectResponse(f"/alugueis/{aluguel['id']}", status_code=303)
+
+
+@router.get("/{id}/editar")
+def editar_form(id: str, request: Request, user: dict = Depends(get_current_user), db: Client = Depends(get_db)):
+    aluguel = db.table("alugueis").select("*,clientes(*),equipamentos(*)").eq("id", id).execute().data[0]
+    clientes = db.table("clientes").select("id,nome").eq("ativo", True).order("nome").execute().data
+    equipamentos = db.table("equipamentos").select("id,modelo,numero_serie,tipo_plano").eq("status", "disponivel").execute().data
+    # Inclui o equipamento atual mesmo que não esteja disponível
+    eq_atual = aluguel.get("equipamentos")
+    if eq_atual and not any(e["id"] == aluguel["equipamento_id"] for e in equipamentos):
+        equipamentos.insert(0, {
+            "id": aluguel["equipamento_id"],
+            "modelo": eq_atual.get("modelo", ""),
+            "numero_serie": eq_atual.get("numero_serie", ""),
+            "tipo_plano": eq_atual.get("tipo_plano", ""),
+        })
+    return templates.TemplateResponse("alugueis/form.html", {
+        "request": request, "user": user,
+        "aluguel": aluguel, "clientes": clientes, "equipamentos": equipamentos,
+    })
+
+
+@router.post("/{id}/editar")
+def editar(
+    id: str, request: Request,
+    data_inicio: str = Form(...), data_fim_prevista: str = Form(...),
+    modalidade: str = Form(...), valor_contratado: str = Form(...),
+    valor_multa_dia: str = Form("0"), observacoes: str = Form(""),
+    user: dict = Depends(get_current_user), db: Client = Depends(get_db),
+):
+    try:
+        d_inicio = date.fromisoformat(data_inicio)
+        d_fim = date.fromisoformat(data_fim_prevista)
+        dias = (d_fim - d_inicio).days
+        val_contratado = float(valor_contratado)
+        val_total = val_contratado * dias if modalidade == "diaria" else val_contratado
+    except ValueError as e:
+        _flash(request, "danger", str(e))
+        return RedirectResponse(f"/alugueis/{id}/editar", status_code=303)
+
+    db.table("alugueis").update({
+        "data_inicio": data_inicio,
+        "data_fim_prevista": data_fim_prevista,
+        "modalidade": modalidade,
+        "valor_contratado": val_contratado,
+        "valor_total_previsto": val_total,
+        "valor_multa_dia": float(valor_multa_dia) if valor_multa_dia else 0.0,
+        "observacoes": observacoes or None,
+    }).eq("id", id).execute()
+
+    _flash(request, "success", "Aluguel atualizado!")
+    return RedirectResponse(f"/alugueis/{id}", status_code=303)
 
 
 @router.get("/{id}")

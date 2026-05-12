@@ -23,3 +23,22 @@ class FaixaPrecoCreate(BaseModel):
         if self.dias_min <= 0 or self.valor_por_dia <= 0:
             raise ValueError("dias_min e valor_por_dia devem ser positivos")
         return self
+
+
+class PacoteCreate(BaseModel):
+    tipo_plano: str = "100GB"
+    dias: int
+    valor_total: float
+
+    @field_validator("tipo_plano")
+    @classmethod
+    def plano_valido(cls, v: str) -> str:
+        if v not in PLANOS_VALIDOS:
+            raise ValueError(f"Plano inválido. Use: {sorted(PLANOS_VALIDOS)}")
+        return v
+
+    @model_validator(mode="after")
+    def valores_validos(self):
+        if self.dias <= 0 or self.valor_total <= 0:
+            raise ValueError("dias e valor_total devem ser positivos")
+        return self

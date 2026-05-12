@@ -12,18 +12,54 @@ def calcular_multa_corrente(aluguel: dict) -> Decimal:
 
 
 def calcular_valor_diaria(dias: int, db: Client, tipo_plano: str = "100GB") -> Decimal | None:
-    res = (
+    # 1. Pacote exato para esse número de dias
+    pacote = (
+        db.table("pacotes_diaria")
+        .select("valor_total")
+        .eq("tipo_plano", tipo_plano)
+        .eq("dias", dias)
+        .eq("ativo", True)
+        .execute()
+    )
+    if pacote.data:
+        return Decimal(str(pacote.data[0]["valor_total"])) / dias
+
+    # 2. Faixa base por intervalo
+    faixa = (
         db.table("faixas_preco_diaria")
         .select("valor_por_dia")
         .lte("dias_min", dias)
         .gte("dias_max", dias)
-        .eq("ativo", True)
         .eq("tipo_plano", tipo_plano)
+        .eq("ativo", True)
         .execute()
     )
-    if res.data:
-        return Decimal(str(res.data[0]["valor_por_dia"]))
-    return None
+    if faixa.data:
+        return Decimal(str(faixa.data[0]["valor_por_dia"]))
+
+    # 3. Fallback: menor faixa disponível (diária base)
+    base = (
+        db.table("faixas_preco_diaria")
+        .select("valor_por_dia")
+        .eq("tipo_plano", tipo_plano)
+        .eq("ativo", True)
+        .order("dias_min")
+        .limit(1)
+        .execute()
+    )
+    return Decimal(str(base.data[0]["valor_por_dia"])) if base.data else None
+
+
+def tem_pacote_exato(dias: int, db: Client, tipo_plano: str = "100GB") -> float | None:
+    res = (
+        db.table("pacotes_diaria")
+        .select("valor_total")
+        .eq("tipo_plano", tipo_plano)
+        .eq("dias", dias)
+        .eq("ativo", True)
+        .execute()
+    )
+    return float(res.data[0]["valor_total"]) if res.data else None
 
 
 def devolver_aluguel(aluguel_id: str, data_devolucao: str, db: Client) -> dict:

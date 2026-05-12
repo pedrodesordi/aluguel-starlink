@@ -1,9 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Novo Aluguel{% endblock %}
+{% block title %}{{ 'Editar' if aluguel.id else 'Novo' }} Aluguel{% endblock %}
 {% block content %}
+{% set editando = aluguel.id is defined and aluguel.id %}
 <div class="d-flex align-items-center gap-2 mb-3">
-  <a href="/alugueis/" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
-  <h4 class="mb-0">Novo Aluguel</h4>
+  <a href="{{ '/alugueis/' + aluguel.id if editando else '/alugueis/' }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0">{{ 'Editar Aluguel' if editando else 'Novo Aluguel' }}</h4>
 </div>
 
 {% if erros and erros.geral %}
@@ -12,66 +13,75 @@
 
 <div class="card border-0 shadow-sm" style="max-width:720px">
   <div class="card-body">
-    <form method="post" action="/alugueis/novo">
+    <form method="post" action="{{ '/alugueis/' + aluguel.id + '/editar' if editando else '/alugueis/novo' }}">
       <div class="row g-3">
         <div class="col-md-6">
           <label class="form-label">Cliente <span class="text-danger">*</span></label>
-          <select name="cliente_id" class="form-select" required>
+          <select name="cliente_id" class="form-select" required {{ 'disabled' if editando }}>
             <option value="">Selecione...</option>
             {% for c in clientes %}
-            <option value="{{ c.id }}">{{ c.nome }}</option>
+            <option value="{{ c.id }}" {{ 'selected' if aluguel.cliente_id == c.id }}>{{ c.nome }}</option>
             {% endfor %}
           </select>
+          {% if editando %}<input type="hidden" name="cliente_id" value="{{ aluguel.cliente_id }}">{% endif %}
         </div>
         <div class="col-md-6">
           <label class="form-label">Equipamento <span class="text-danger">*</span></label>
-          <select name="equipamento_id" class="form-select" required>
+          <select name="equipamento_id" class="form-select" required {{ 'disabled' if editando }}>
             <option value="">Selecione...</option>
             {% for e in equipamentos %}
-            <option value="{{ e.id }}" data-plano="{{ e.tipo_plano or '100GB' }}">{{ e.modelo }} — {{ e.numero_serie }}</option>
+            <option value="{{ e.id }}" data-plano="{{ e.tipo_plano or '100GB' }}"
+              {{ 'selected' if aluguel.equipamento_id == e.id }}>{{ e.modelo }} — {{ e.numero_serie }}</option>
             {% endfor %}
           </select>
+          {% if editando %}<input type="hidden" name="equipamento_id" value="{{ aluguel.equipamento_id }}">{% endif %}
         </div>
         <div class="col-md-4">
           <label class="form-label">Modalidade <span class="text-danger">*</span></label>
           <select name="modalidade" class="form-select" id="modalidade" onchange="atualizarCampos()">
-            <option value="diaria">Diária</option>
-            <option value="mensal">Mensal</option>
+            <option value="diaria" {{ 'selected' if aluguel.modalidade == 'diaria' }}>Diária</option>
+            <option value="mensal" {{ 'selected' if aluguel.modalidade == 'mensal' }}>Mensal</option>
           </select>
         </div>
         <div class="col-md-4">
           <label class="form-label">Plano</label>
           <select name="tipo_plano" id="tipo_plano" class="form-select" onchange="calcularDiaria()">
-            <option value="100GB">100GB</option>
-            <option value="ILIMITADO">Ilimitado</option>
+            <option value="100GB" {{ 'selected' if not aluguel.tipo_plano or aluguel.tipo_plano == '100GB' }}>100GB</option>
+            <option value="ILIMITADO" {{ 'selected' if aluguel.tipo_plano == 'ILIMITADO' }}>Ilimitado</option>
           </select>
         </div>
         <div class="col-md-4">
           <label class="form-label">Data de início <span class="text-danger">*</span></label>
-          <input type="date" name="data_inicio" id="data_inicio" class="form-control" onchange="calcularDiaria()" required>
+          <input type="date" name="data_inicio" id="data_inicio" class="form-control"
+                 value="{{ aluguel.data_inicio or '' }}" onchange="calcularDiaria()" required>
         </div>
         <div class="col-md-4">
           <label class="form-label">Data de fim prevista <span class="text-danger">*</span></label>
-          <input type="date" name="data_fim_prevista" id="data_fim_prevista" class="form-control" onchange="calcularDiaria()" required>
+          <input type="date" name="data_fim_prevista" id="data_fim_prevista" class="form-control"
+                 value="{{ aluguel.data_fim_prevista or '' }}" onchange="calcularDiaria()" required>
         </div>
 
         <div class="col-md-4">
           <label class="form-label">Valor contratado (R$) <span class="text-danger">*</span></label>
-          <input type="number" step="0.01" name="valor_contratado" id="valor_contratado" class="form-control" required>
+          <input type="number" step="0.01" name="valor_contratado" id="valor_contratado"
+                 class="form-control" value="{{ aluguel.valor_contratado or '' }}" required>
           <div id="sugestao_diaria" class="form-text mt-1"></div>
         </div>
         <div class="col-md-4">
           <label class="form-label">Multa por dia de atraso (R$)</label>
-          <input type="number" step="0.01" name="valor_multa_dia" class="form-control" value="0" min="0">
+          <input type="number" step="0.01" name="valor_multa_dia" class="form-control"
+                 value="{{ aluguel.valor_multa_dia or 0 }}" min="0">
         </div>
         <div class="col-12">
           <label class="form-label">Observações</label>
-          <textarea name="observacoes" class="form-control" rows="2"></textarea>
+          <textarea name="observacoes" class="form-control" rows="2">{{ aluguel.observacoes or '' }}</textarea>
         </div>
       </div>
       <div class="mt-4 d-flex gap-2">
-        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Criar Aluguel</button>
-        <a href="/alugueis/" class="btn btn-outline-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check-lg"></i> {{ 'Salvar Alterações' if editando else 'Criar Aluguel' }}
+        </button>
+        <a href="{{ '/alugueis/' + aluguel.id if editando else '/alugueis/' }}" class="btn btn-outline-secondary">Cancelar</a>
       </div>
     </form>
   </div>

@@ -5,76 +5,95 @@
   <h4><i class="bi bi-table"></i> Tabela de Preços — Diária</h4>
 </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-md-6">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-white fw-bold"><i class="bi bi-wifi"></i> Plano 100GB</div>
-      <div class="table-responsive">
-        <table class="table mb-0">
-          <thead class="table-light">
-            <tr><th>De (dias)</th><th>Até (dias)</th><th>R$/dia</th><th></th></tr>
-          </thead>
-          <tbody>
-            {% for f in faixas_100gb %}
-            <tr class="{{ '' if f.ativo else 'text-muted text-decoration-line-through' }}">
-              <td>{{ f.dias_min }}</td>
-              <td>{{ f.dias_max }}</td>
-              <td>{{ f.valor_por_dia | brl }}</td>
-              <td>
-                {% if f.ativo %}
-                <form method="post" action="/configuracoes/faixas-preco/{{ f.id }}/excluir" class="d-inline"
-                      onsubmit="return confirmar('Remover esta faixa?')">
-                  <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                </form>
-                {% endif %}
-              </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="4" class="text-center text-muted py-3">Nenhuma faixa cadastrada</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+{% macro tabela_plano(label, icon, faixas, pacotes, slug) %}
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white fw-bold"><i class="bi bi-{{ icon }}"></i> Plano {{ label }}</div>
+  <div class="row g-0">
+    <div class="col-md-6 border-end">
+      <div class="px-3 pt-3 pb-1 text-muted small fw-semibold">DIÁRIA BASE</div>
+      <table class="table table-sm mb-0">
+        <thead class="table-light"><tr><th>De (dias)</th><th>Até (dias)</th><th>R$/dia</th><th></th></tr></thead>
+        <tbody>
+          {% for f in faixas %}
+          <tr>
+            <td>{{ f.dias_min }}</td>
+            <td>{{ f.dias_max if f.dias_max < 9999 else '∞' }}</td>
+            <td>{{ f.valor_por_dia | brl }}</td>
+            <td>
+              <form method="post" action="/configuracoes/faixas-preco/{{ f.id }}/excluir" class="d-inline"
+                    onsubmit="return confirmar('Remover esta faixa?')">
+                <button class="btn btn-xs btn-outline-danger"><i class="bi bi-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-muted text-center py-2">Nenhuma faixa</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-  </div>
-
-  <div class="col-md-6">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-white fw-bold"><i class="bi bi-infinity"></i> Plano Ilimitado</div>
-      <div class="table-responsive">
-        <table class="table mb-0">
-          <thead class="table-light">
-            <tr><th>De (dias)</th><th>Até (dias)</th><th>R$/dia</th><th></th></tr>
-          </thead>
-          <tbody>
-            {% for f in faixas_ilimitado %}
-            <tr class="{{ '' if f.ativo else 'text-muted text-decoration-line-through' }}">
-              <td>{{ f.dias_min }}</td>
-              <td>{{ f.dias_max }}</td>
-              <td>{{ f.valor_por_dia | brl }}</td>
-              <td>
-                {% if f.ativo %}
-                <form method="post" action="/configuracoes/faixas-preco/{{ f.id }}/excluir" class="d-inline"
-                      onsubmit="return confirmar('Remover esta faixa?')">
-                  <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                </form>
-                {% endif %}
-              </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="4" class="text-center text-muted py-3">Nenhuma faixa cadastrada</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+    <div class="col-md-6">
+      <div class="px-3 pt-3 pb-1 text-muted small fw-semibold">PACOTES COM DESCONTO</div>
+      <table class="table table-sm mb-0">
+        <thead class="table-light"><tr><th>Dias</th><th>Valor total</th><th>Equivale a</th><th></th></tr></thead>
+        <tbody>
+          {% for p in pacotes %}
+          <tr>
+            <td>{{ p.dias }} dias</td>
+            <td class="fw-bold text-success">{{ p.valor_total | brl }}</td>
+            <td class="text-muted small">{{ (p.valor_total / p.dias) | brl }}/dia</td>
+            <td>
+              <form method="post" action="/configuracoes/faixas-preco/pacotes/{{ p.id }}/excluir" class="d-inline"
+                    onsubmit="return confirmar('Remover este pacote?')">
+                <button class="btn btn-xs btn-outline-danger"><i class="bi bi-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-muted text-center py-2">Nenhum pacote</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
+{% endmacro %}
+
+{{ tabela_plano('100GB', 'wifi', faixas_100gb, pacotes_100gb, '100gb') }}
+{{ tabela_plano('Ilimitado', 'infinity', faixas_ilimitado, pacotes_ilimitado, 'ilimitado') }}
 
 <div class="row g-3">
   <div class="col-md-5">
     <div class="card border-0 shadow-sm">
-      <div class="card-header bg-white fw-bold">Nova Faixa</div>
+      <div class="card-header bg-white fw-bold">Novo Pacote com Desconto</div>
+      <div class="card-body">
+        {% if erros_pacote %}
+        <div class="alert alert-danger py-2 small">{{ erros_pacote }}</div>
+        {% endif %}
+        <form method="post" action="/configuracoes/faixas-preco/pacotes/novo">
+          <div class="mb-3">
+            <label class="form-label">Plano</label>
+            <select name="tipo_plano" class="form-select">
+              <option value="100GB">100GB</option>
+              <option value="ILIMITADO">Ilimitado</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Número de dias (exato)</label>
+            <input type="number" name="dias" class="form-control" min="1" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Valor total do pacote (R$)</label>
+            <input type="number" step="0.01" name="valor_total" class="form-control" min="0.01" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100"><i class="bi bi-plus-lg"></i> Adicionar Pacote</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-bold">Nova Faixa Base</div>
       <div class="card-body">
         {% if erros %}
         <div class="alert alert-danger py-2 small">{{ erros }}</div>
@@ -92,14 +111,14 @@
             <input type="number" name="dias_min" class="form-control" min="1" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Até (dias)</label>
+            <label class="form-label">Até (dias) — use 9999 para ilimitado</label>
             <input type="number" name="dias_max" class="form-control" min="1" required>
           </div>
           <div class="mb-3">
             <label class="form-label">Valor por dia (R$)</label>
             <input type="number" step="0.01" name="valor_por_dia" class="form-control" min="0.01" required>
           </div>
-          <button type="submit" class="btn btn-primary w-100"><i class="bi bi-plus-lg"></i> Adicionar</button>
+          <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-plus-lg"></i> Adicionar Faixa</button>
         </form>
       </div>
     </div>
