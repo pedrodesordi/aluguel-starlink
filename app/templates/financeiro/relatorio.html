@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Relatório Financeiro {{ ano }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4><i class="bi bi-bar-chart"></i> Relatório Financeiro</h4>
+  <div class="d-flex gap-2">
+    <a href="/financeiro/relatorio?ano={{ ano - 1 }}" class="btn btn-outline-secondary btn-sm">« {{ ano - 1 }}</a>
+    <span class="btn btn-secondary btn-sm disabled">{{ ano }}</span>
+    <a href="/financeiro/relatorio?ano={{ ano + 1 }}" class="btn btn-outline-secondary btn-sm">{{ ano + 1 }} »</a>
+  </div>
+</div>
+
+{% set nomes_meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'] %}
+
+<div class="card border-0 shadow-sm mb-3">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>Mês</th><th class="text-end">Recebido</th><th class="text-end">Pendente</th><th class="text-end">Total emitido</th></tr>
+      </thead>
+      <tbody>
+        {% set ns = namespace(total_rec=0, total_pend=0, total_emit=0) %}
+        {% for m in meses %}
+        {% set ns.total_rec = ns.total_rec + m.recebido %}
+        {% set ns.total_pend = ns.total_pend + m.pendente %}
+        {% set ns.total_emit = ns.total_emit + m.total %}
+        <tr>
+          <td>{{ nomes_meses[m.mes - 1] }}/{{ ano }}</td>
+          <td class="text-end text-success fw-semibold">{{ m.recebido | brl }}</td>
+          <td class="text-end text-warning">{{ m.pendente | brl }}</td>
+          <td class="text-end">{{ m.total | brl }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot class="table-light fw-bold">
+        <tr>
+          <td>Total {{ ano }}</td>
+          <td class="text-end text-success">{{ ns.total_rec | brl }}</td>
+          <td class="text-end text-warning">{{ ns.total_pend | brl }}</td>
+          <td class="text-end">{{ ns.total_emit | brl }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endblock %}

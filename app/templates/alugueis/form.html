@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Novo Aluguel{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="/alugueis/" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0">Novo Aluguel</h4>
+</div>
+
+{% if erros and erros.geral %}
+<div class="alert alert-danger">{{ erros.geral }}</div>
+{% endif %}
+
+<div class="card border-0 shadow-sm" style="max-width:720px">
+  <div class="card-body">
+    <form method="post" action="/alugueis/novo">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Cliente <span class="text-danger">*</span></label>
+          <select name="cliente_id" class="form-select" required>
+            <option value="">Selecione...</option>
+            {% for c in clientes %}
+            <option value="{{ c.id }}">{{ c.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Equipamento <span class="text-danger">*</span></label>
+          <select name="equipamento_id" class="form-select" required>
+            <option value="">Selecione...</option>
+            {% for e in equipamentos %}
+            <option value="{{ e.id }}">{{ e.modelo }} — {{ e.numero_serie }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Modalidade <span class="text-danger">*</span></label>
+          <select name="modalidade" class="form-select" id="modalidade" onchange="atualizarCampos()">
+            <option value="diaria">Diária</option>
+            <option value="mensal">Mensal</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Data de início <span class="text-danger">*</span></label>
+          <input type="date" name="data_inicio" id="data_inicio" class="form-control" onchange="calcularDiaria()" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Data de fim prevista <span class="text-danger">*</span></label>
+          <input type="date" name="data_fim_prevista" id="data_fim_prevista" class="form-control" onchange="calcularDiaria()" required>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Valor contratado (R$) <span class="text-danger">*</span></label>
+          <input type="number" step="0.01" name="valor_contratado" id="valor_contratado" class="form-control" required>
+          <div id="sugestao_diaria" class="form-text mt-1"></div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Multa por dia de atraso (R$)</label>
+          <input type="number" step="0.01" name="valor_multa_dia" class="form-control" value="0" min="0">
+        </div>
+        <div class="col-12">
+          <label class="form-label">Observações</label>
+          <textarea name="observacoes" class="form-control" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Criar Aluguel</button>
+        <a href="/alugueis/" class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function calcularDiaria() {
+  const inicio = document.getElementById('data_inicio').value;
+  const fim = document.getElementById('data_fim_prevista').value;
+  const modalidade = document.getElementById('modalidade').value;
+  const sugestao = document.getElementById('sugestao_diaria');
+
+  if (modalidade !== 'diaria' || !inicio || !fim) { sugestao.innerHTML = ''; return; }
+
+  const dias = Math.round((new Date(fim) - new Date(inicio)) / 86400000);
+  if (dias <= 0) { sugestao.innerHTML = ''; return; }
+
+  sugestao.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Calculando...';
+  fetch(`/alugueis/calcular-diaria?dias=${dias}`)
+    .then(r => r.text())
+    .then(html => {
+      sugestao.innerHTML = html;
+      // Extrai valor sugerido e preenche o campo
+      const match = html.match(/value="([\d.]+)"/);
+      if (match) document.getElementById('valor_contratado').value = parseFloat(match[1]);
+    });
+}
+
+function atualizarCampos() { calcularDiaria(); }
+</script>
+{% endblock %}

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 12px; color: #111; margin: 40px; }
+    h1 { font-size: 16px; text-align: center; }
+    h2 { font-size: 13px; margin-top: 20px; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    td, th { border: 1px solid #ccc; padding: 6px 10px; }
+    th { background: #f0f0f0; }
+    .assinatura { margin-top: 30px; border-top: 1px solid #555; padding-top: 10px; }
+    .rodape { text-align: center; font-size: 10px; color: #666; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <h1>TERMO DE RESPONSABILIDADE — ALUGUEL DE EQUIPAMENTO STARLINK</h1>
+
+  <h2>1. Dados do Locatário</h2>
+  <table>
+    <tr><th>Nome</th><td>{{ cliente.nome }}</td></tr>
+    <tr><th>CPF</th><td>{{ cliente.cpf }}</td></tr>
+    <tr><th>Telefone</th><td>{{ cliente.telefone or '—' }}</td></tr>
+    <tr><th>Endereço</th><td>{{ cliente.endereco or '—' }}, {{ cliente.cidade or '' }} - {{ cliente.estado or '' }}</td></tr>
+  </table>
+
+  <h2>2. Dados do Equipamento</h2>
+  <table>
+    <tr><th>Modelo</th><td>{{ equipamento.modelo }}</td></tr>
+    <tr><th>Número de Série</th><td>{{ equipamento.numero_serie }}</td></tr>
+    <tr><th>Número Starlink</th><td>{{ equipamento.numero_starlink or '—' }}</td></tr>
+    <tr><th>Plano</th><td>{{ equipamento.tipo_plano or '—' }}</td></tr>
+  </table>
+
+  <h2>3. Dados do Contrato</h2>
+  <table>
+    <tr><th>Início</th><td>{{ aluguel.data_inicio }}</td><th>Fim previsto</th><td>{{ aluguel.data_fim_prevista }}</td></tr>
+    <tr><th>Modalidade</th><td>{{ 'Diária' if aluguel.modalidade == 'diaria' else 'Mensal' }}</td>
+        <th>Valor</th><td>R$ {{ "%.2f"|format(aluguel.valor_contratado) }}</td></tr>
+    <tr><th>Multa por dia de atraso</th><td colspan="3">R$ {{ "%.2f"|format(aluguel.valor_multa_dia) }}</td></tr>
+  </table>
+
+  <h2>4. Termos e Condições</h2>
+  <ol style="font-size:11px">
+    <li>O locatário é responsável pela guarda e conservação do equipamento durante o período de locação.</li>
+    <li>Em caso de danos, perda ou furto, o locatário ressarcirá o valor integral de substituição do equipamento.</li>
+    <li>Atrasos na devolução acarretarão multa diária conforme item 3 acima.</li>
+    <li>Modificações não autorizadas no equipamento são proibidas.</li>
+    <li>O locatário declara ter recebido o equipamento em perfeito estado de funcionamento.</li>
+    <li>O não pagamento nas datas acordadas poderá acarretar cobrança de juros e rescisão do contrato.</li>
+    <li>Este aceite digital tem validade legal conforme a Lei 14.063/2020.</li>
+  </ol>
+
+  <div class="assinatura">
+    <h2>5. Comprovante de Aceite Digital</h2>
+    <table>
+      <tr><th>Assinado por</th><td>{{ cliente.nome }}</td></tr>
+      <tr><th>Data e hora do aceite</th><td>{{ aceito_em }}</td></tr>
+      <tr><th>IP registrado</th><td>{{ ip_aceite }}</td></tr>
+      <tr><th>Token do documento</th><td style="font-size:9px">{{ termo.token }}</td></tr>
+    </table>
+  </div>
+
+  <div class="rodape">
+    Documento gerado automaticamente pelo sistema de Aluguel Starlink.
+    Aceite registrado nos termos da Lei 14.063/2020 (Assinaturas Eletrônicas).
+  </div>
+</body>
+</html>

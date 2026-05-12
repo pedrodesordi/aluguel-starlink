@@ -1,0 +1,27 @@
+/* Status badges — aluguéis */
+.badge.status-ativo        { background-color: #0d6efd; }
+.badge.status-atrasado     { background-color: #dc3545; }
+.badge.status-devolvido    { background-color: #6c757d; }
+.badge.status-cancelado    { background-color: #343a40; }
+
+/* Status badges — pagamentos */
+.badge.status-pag-pendente { background-color: #ffc107; color: #000; }
+.badge.status-pag-pago     { background-color: #198754; }
+.badge.status-pag-vencido  { background-color: #dc3545; }
+.badge.status-pag-cancelado{ background-color: #6c757d; }
+
+/* Status badges — equipamentos */
+.badge.status-disponivel   { background-color: #198754; }
+.badge.status-alugado      { background-color: #0d6efd; }
+.badge.status-manutencao   { background-color: #fd7e14; }
+.badge.status-baixado      { background-color: #6c757d; }
+
+/* Botão extra pequeno */
+.btn-xs {
+  padding: 0.1rem 0.35rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+}
+
+/* Ajuste de tabelas */
+.table td, .table th { vertical-align: middle; }

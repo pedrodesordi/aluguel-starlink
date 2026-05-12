@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Usuários do Sistema{% endblock %}
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-person-gear"></i> Usuários do Sistema</h4>
+
+<div class="row g-3">
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr><th>Nome</th><th>Email</th><th>Perfil</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for u in usuarios %}
+            <tr class="{{ '' if u.ativo else 'text-muted' }}">
+              <td>{{ u.nome }}</td>
+              <td>{{ u.email }}</td>
+              <td>
+                <span class="badge {{ 'bg-warning text-dark' if u.perfil == 'admin' else 'bg-secondary' }}">
+                  {{ u.perfil | title }}
+                </span>
+              </td>
+              <td>
+                <span class="badge {{ 'bg-success' if u.ativo else 'bg-danger' }}">
+                  {{ 'Ativo' if u.ativo else 'Inativo' }}
+                </span>
+              </td>
+              <td>
+                {% if u.ativo %}
+                  {% if u.id != user.id %}
+                  <form method="post" action="/admin/usuarios/{{ u.id }}/desativar" class="d-inline"
+                        onsubmit="return confirmar('Desativar {{ u.nome }}?')">
+                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-person-x"></i></button>
+                  </form>
+                  {% endif %}
+                {% else %}
+                <form method="post" action="/admin/usuarios/{{ u.id }}/reativar" class="d-inline">
+                  <button class="btn btn-sm btn-outline-success"><i class="bi bi-person-check"></i></button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-3">Nenhum usuário</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-bold">Novo Usuário</div>
+      <div class="card-body">
+        <form method="post" action="/admin/usuarios/novo">
+          <div class="mb-3">
+            <label class="form-label">Nome</label>
+            <input type="text" name="nome" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Perfil</label>
+            <select name="perfil" class="form-select">
+              <option value="operador">Operador</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Senha</label>
+            <input type="password" name="senha" class="form-control" minlength="6" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100"><i class="bi bi-plus-lg"></i> Criar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Aluguéis{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4><i class="bi bi-file-earmark-text"></i> Aluguéis</h4>
+  <a href="/alugueis/novo" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Novo Aluguel</a>
+</div>
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link {{ 'active' if not filtro_status }}" href="/alugueis/">Todos</a></li>
+  <li class="nav-item"><a class="nav-link {{ 'active' if filtro_status == 'ativo' }}" href="/alugueis/?status=ativo">Ativos</a></li>
+  <li class="nav-item"><a class="nav-link {{ 'active' if filtro_status == 'atrasado' }}" href="/alugueis/?status=atrasado">Em atraso</a></li>
+  <li class="nav-item"><a class="nav-link {{ 'active' if filtro_status == 'devolvido' }}" href="/alugueis/?status=devolvido">Devolvidos</a></li>
+</ul>
+
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>Cliente</th><th>Equipamento</th><th>Início</th><th>Fim previsto</th><th>Modalidade</th><th>Valor</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for a in alugueis %}
+        <tr>
+          <td>{{ a.clientes.nome if a.clientes else '—' }}</td>
+          <td>{{ a.equipamentos.modelo if a.equipamentos else '—' }}<br>
+            <small class="text-muted">{{ a.equipamentos.numero_serie if a.equipamentos else '' }}</small>
+          </td>
+          <td>{{ a.data_inicio | data_br }}</td>
+          <td>{{ a.data_fim_prevista | data_br }}</td>
+          <td>{{ 'Diária' if a.modalidade == 'diaria' else 'Mensal' }}</td>
+          <td>
+            {{ a.valor_contratado | brl }}
+            {% if a.multa_corrente %}
+            <br><small class="text-danger">+{{ a.multa_corrente | brl }} multa</small>
+            {% endif %}
+          </td>
+          <td><span class="badge status-{{ a.status }}">{{ a.status | title }}</span></td>
+          <td><a href="/alugueis/{{ a.id }}" class="btn btn-sm btn-outline-secondary">Ver</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center text-muted py-3">Nenhum aluguel encontrado</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

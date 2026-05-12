@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Aluguel — {{ aluguel.clientes.nome if aluguel.clientes else '' }}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="/alugueis/" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0">Detalhe do Aluguel</h4>
+  <span class="badge status-{{ aluguel.status }} ms-2 fs-6">{{ aluguel.status | title }}</span>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="text-muted">Contrato</h6>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Cliente</dt>
+          <dd class="col-sm-7"><a href="/clientes/{{ aluguel.clientes.id }}">{{ aluguel.clientes.nome if aluguel.clientes else '—' }}</a></dd>
+          <dt class="col-sm-5">Equipamento</dt>
+          <dd class="col-sm-7">{{ aluguel.equipamentos.modelo if aluguel.equipamentos else '—' }}<br>
+            <small class="text-muted">{{ aluguel.equipamentos.numero_serie if aluguel.equipamentos else '' }}</small>
+          </dd>
+          <dt class="col-sm-5">Modalidade</dt>
+          <dd class="col-sm-7">{{ 'Diária' if aluguel.modalidade == 'diaria' else 'Mensal' }}</dd>
+          <dt class="col-sm-5">Início</dt><dd class="col-sm-7">{{ aluguel.data_inicio | data_br }}</dd>
+          <dt class="col-sm-5">Fim previsto</dt><dd class="col-sm-7">{{ aluguel.data_fim_prevista | data_br }}</dd>
+          {% if aluguel.data_fim_real %}
+          <dt class="col-sm-5">Devolvido em</dt><dd class="col-sm-7">{{ aluguel.data_fim_real | data_br }}</dd>
+          {% endif %}
+          <dt class="col-sm-5">Valor</dt><dd class="col-sm-7">{{ aluguel.valor_contratado | brl }}{{ '/dia' if aluguel.modalidade == 'diaria' else '/mês' }}</dd>
+          <dt class="col-sm-5">Total previsto</dt><dd class="col-sm-7">{{ aluguel.valor_total_previsto | brl }}</dd>
+          {% if aluguel.dias_atraso %}
+          <dt class="col-sm-5 text-danger">Dias de atraso</dt><dd class="col-sm-7 text-danger">{{ aluguel.dias_atraso }} dias</dd>
+          <dt class="col-sm-5 text-danger">Multa total</dt><dd class="col-sm-7 text-danger">{{ aluguel.valor_multa_total | brl }}</dd>
+          {% elif multa_corrente %}
+          <dt class="col-sm-5 text-danger">Multa acumulada</dt><dd class="col-sm-7 text-danger">{{ multa_corrente | brl }}</dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="text-muted">Termo de Responsabilidade</h6>
+        {% if termo %}
+          {% if termo.status == 'aceito' %}
+          <div class="alert alert-success py-2">
+            <i class="bi bi-check-circle"></i> Assinado em {{ termo.aceito_em | data_br }}
+            {% if termo.pdf_path %}
+            <a href="/termos/{{ termo.token }}/pdf" class="btn btn-sm btn-success ms-2">
+              <i class="bi bi-download"></i> PDF
+            </a>
+            {% endif %}
+          </div>
+          {% elif termo.status == 'pendente' %}
+          <div class="alert alert-warning py-2">
+            <i class="bi bi-clock"></i> Aguardando assinatura do cliente
+          </div>
+          {% else %}
+          <div class="alert alert-secondary py-2">Link expirado</div>
+          {% endif %}
+          <div class="input-group mt-2">
+            <input type="text" class="form-control form-control-sm" id="link_termo"
+                   value="{{ request.base_url }}termos/{{ termo.token }}" readonly>
+            <button class="btn btn-outline-secondary btn-sm" onclick="copiarLink()">
+              <i class="bi bi-clipboard"></i> Copiar
+            </button>
+          </div>
+          <small class="text-muted">Envie este link ao cliente para assinar o termo.</small>
+        {% else %}
+          <p class="text-muted">Nenhum termo gerado.</p>
+        {% endif %}
+
+        {% if aluguel.status in ['ativo', 'atrasado'] %}
+        <hr>
+        <h6 class="text-muted">Registrar devolução</h6>
+        <form method="post" action="/alugueis/{{ aluguel.id }}/devolver">
+          <div class="input-group">
+            <input type="date" name="data_devolucao" class="form-control form-control-sm" required>
+            <button type="submit" class="btn btn-warning btn-sm" onclick="return confirmar('Confirmar devolução?')">
+              <i class="bi bi-box-arrow-in-left"></i> Devolver
+            </button>
+          </div>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white fw-bold"><i class="bi bi-credit-card"></i> Pagamentos</div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Tipo</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {% for p in pagamentos %}
+        <tr>
+          <td>{{ p.descricao }}</td>
+          <td>{{ p.data_vencimento | data_br }}</td>
+          <td>{{ p.valor | brl }}</td>
+          <td>{{ p.tipo | title }}</td>
+          <td id="status-pag-{{ p.id }}">
+            <span class="badge status-pag-{{ p.status }}">{{ p.status | title }}</span>
+            {% if p.status in ['pendente','vencido'] and user.perfil == 'admin' %}
+            <button class="btn btn-xs btn-outline-success ms-1"
+                    hx-post="/financeiro/pagamentos/{{ p.id }}/pagar"
+                    hx-target="#status-pag-{{ p.id }}"
+                    hx-swap="innerHTML">
+              <i class="bi bi-check2"></i> Pagar
+            </button>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-muted py-3">Nenhum pagamento</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function copiarLink() {
+  const el = document.getElementById('link_termo');
+  navigator.clipboard.writeText(el.value).then(() => alert('Link copiado!'));
+}
+</script>
+{% endblock %}

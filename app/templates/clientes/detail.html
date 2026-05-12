@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ cliente.nome }}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="/clientes/" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0">{{ cliente.nome }}</h4>
+  <a href="/clientes/{{ cliente.id }}/editar" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-pencil"></i> Editar</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="text-muted mb-3">Dados do cliente</h6>
+        <dl class="row mb-0">
+          <dt class="col-sm-4">CPF</dt><dd class="col-sm-8">{{ cliente.cpf }}</dd>
+          <dt class="col-sm-4">Telefone</dt><dd class="col-sm-8">{{ cliente.telefone or '—' }}</dd>
+          <dt class="col-sm-4">Email</dt><dd class="col-sm-8">{{ cliente.email or '—' }}</dd>
+          <dt class="col-sm-4">Endereço</dt><dd class="col-sm-8">{{ cliente.endereco or '—' }}</dd>
+          <dt class="col-sm-4">Cidade</dt><dd class="col-sm-8">{{ (cliente.cidade or '') + (' — ' + cliente.estado if cliente.estado else '') or '—' }}</dd>
+        </dl>
+        {% if cliente.observacoes %}
+        <hr>
+        <small class="text-muted">{{ cliente.observacoes }}</small>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white fw-bold d-flex justify-content-between">
+    <span><i class="bi bi-file-earmark-text"></i> Histórico de aluguéis</span>
+    <a href="/alugueis/novo?cliente_id={{ cliente.id }}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Novo aluguel</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>Equipamento</th><th>Início</th><th>Fim previsto</th><th>Modalidade</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for a in alugueis %}
+        <tr>
+          <td>{{ a.equipamentos.modelo if a.equipamentos else '—' }}</td>
+          <td>{{ a.data_inicio | data_br }}</td>
+          <td>{{ a.data_fim_prevista | data_br }}</td>
+          <td>{{ 'Diária' if a.modalidade == 'diaria' else 'Mensal' }}</td>
+          <td><span class="badge status-{{ a.status }}">{{ a.status | title }}</span></td>
+          <td><a href="/alugueis/{{ a.id }}" class="btn btn-sm btn-outline-secondary">Ver</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-center text-muted py-3">Nenhum aluguel</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

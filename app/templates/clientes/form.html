@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if cliente.id else 'Novo' }} Cliente{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="/clientes/" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0">{{ 'Editar' if cliente.id else 'Novo' }} Cliente</h4>
+</div>
+
+<div class="card border-0 shadow-sm" style="max-width:680px">
+  <div class="card-body">
+    <form method="post" action="{{ '/clientes/' + cliente.id + '/editar' if cliente.id else '/clientes/novo' }}">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label">Nome <span class="text-danger">*</span></label>
+          <input type="text" name="nome" class="form-control {{ 'is-invalid' if erros and erros.nome }}" value="{{ cliente.nome or '' }}" required>
+          {% if erros and erros.nome %}<div class="invalid-feedback">{{ erros.nome }}</div>{% endif %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">CPF <span class="text-danger">*</span></label>
+          <input type="text" name="cpf" class="form-control cpf-mask {{ 'is-invalid' if erros and erros.cpf }}" value="{{ cliente.cpf or '' }}" placeholder="000.000.000-00" required>
+          {% if erros and erros.cpf %}<div class="invalid-feedback">{{ erros.cpf }}</div>{% endif %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Telefone</label>
+          <input type="text" name="telefone" class="form-control" value="{{ cliente.telefone or '' }}" placeholder="(00) 90000-0000">
+        </div>
+        <div class="col-12">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-control" value="{{ cliente.email or '' }}">
+        </div>
+        <div class="col-12">
+          <label class="form-label">Endereço</label>
+          <input type="text" name="endereco" class="form-control" value="{{ cliente.endereco or '' }}">
+        </div>
+        <div class="col-md-8">
+          <label class="form-label">Cidade</label>
+          <input type="text" name="cidade" class="form-control" value="{{ cliente.cidade or '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Estado (UF)</label>
+          <input type="text" name="estado" class="form-control" maxlength="2" value="{{ cliente.estado or '' }}" placeholder="SP">
+        </div>
+        <div class="col-12">
+          <label class="form-label">Observações</label>
+          <textarea name="observacoes" class="form-control" rows="2">{{ cliente.observacoes or '' }}</textarea>
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Salvar</button>
+        <a href="{{ '/clientes/' + cliente.id if cliente.id else '/clientes/' }}" class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
