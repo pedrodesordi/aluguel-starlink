@@ -8,6 +8,7 @@ class EquipamentoCreate(BaseModel):
     modelo: str
     tipo_plano: str | None = None
     vencimento_mensalidade: int | None = None
+    custo_mensalidade: float | None = None
     status: str = "disponivel"
     descricao: str | None = None
 
@@ -25,5 +26,6 @@ class EquipamentoUpdate(BaseModel):
     modelo: str | None = None
     tipo_plano: str | None = None
     vencimento_mensalidade: int | None = None
+    custo_mensalidade: float | None = None
     status: str | None = None
     descricao: str | None = None

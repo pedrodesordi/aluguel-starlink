@@ -28,7 +28,7 @@
           <select name="equipamento_id" class="form-select" required>
             <option value="">Selecione...</option>
             {% for e in equipamentos %}
-            <option value="{{ e.id }}">{{ e.modelo }} — {{ e.numero_serie }}</option>
+            <option value="{{ e.id }}" data-plano="{{ e.tipo_plano or '100GB' }}">{{ e.modelo }} — {{ e.numero_serie }}</option>
             {% endfor %}
           </select>
         </div>
@@ -37,6 +37,13 @@
           <select name="modalidade" class="form-select" id="modalidade" onchange="atualizarCampos()">
             <option value="diaria">Diária</option>
             <option value="mensal">Mensal</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Plano</label>
+          <select name="tipo_plano" id="tipo_plano" class="form-select" onchange="calcularDiaria()">
+            <option value="100GB">100GB</option>
+            <option value="ILIMITADO">Ilimitado</option>
           </select>
         </div>
         <div class="col-md-4">
@@ -75,6 +82,7 @@ function calcularDiaria() {
   const inicio = document.getElementById('data_inicio').value;
   const fim = document.getElementById('data_fim_prevista').value;
   const modalidade = document.getElementById('modalidade').value;
+  const tipoPlano = document.getElementById('tipo_plano').value;
   const sugestao = document.getElementById('sugestao_diaria');
 
   if (modalidade !== 'diaria' || !inicio || !fim) { sugestao.innerHTML = ''; return; }
@@ -83,16 +91,22 @@ function calcularDiaria() {
   if (dias <= 0) { sugestao.innerHTML = ''; return; }
 
   sugestao.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Calculando...';
-  fetch(`/alugueis/calcular-diaria?dias=${dias}`)
+  fetch(`/alugueis/calcular-diaria?dias=${dias}&tipo_plano=${tipoPlano}`)
     .then(r => r.text())
     .then(html => {
       sugestao.innerHTML = html;
-      // Extrai valor sugerido e preenche o campo
       const match = html.match(/value="([\d.]+)"/);
       if (match) document.getElementById('valor_contratado').value = parseFloat(match[1]);
     });
 }
 
 function atualizarCampos() { calcularDiaria(); }
+
+document.querySelector('[name=equipamento_id]').addEventListener('change', function() {
+  const opt = this.options[this.selectedIndex];
+  const plano = opt.dataset.plano || '100GB';
+  document.getElementById('tipo_plano').value = plano;
+  calcularDiaria();
+});
 </script>
 {% endblock %}

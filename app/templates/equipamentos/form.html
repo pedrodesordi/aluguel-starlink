@@ -30,11 +30,22 @@
             {% endfor %}
           </select>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
           <label class="form-label">Tipo de Plano</label>
-          <input type="text" name="tipo_plano" class="form-control" value="{{ equipamento.tipo_plano or '' }}" placeholder="Ex: ILIMITADO, 100GB">
+          <select name="tipo_plano" id="tipo_plano" class="form-select" onchange="sugerirCusto()">
+            <option value="">Não informado</option>
+            {% for p in ['100GB','ILIMITADO','PAUSADO'] %}
+            <option value="{{ p }}" {{ 'selected' if equipamento.tipo_plano == p }}>{{ p }}</option>
+            {% endfor %}
+          </select>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
+          <label class="form-label">Custo Mensal (R$)</label>
+          <input type="number" step="0.01" name="custo_mensalidade" id="custo_mensalidade"
+                 class="form-control" value="{{ equipamento.custo_mensalidade or '' }}" placeholder="0,00">
+          <div class="form-text">Valor pago à Starlink por mês.</div>
+        </div>
+        <div class="col-md-4">
           <label class="form-label">Dia de vencimento da mensalidade</label>
           <select name="vencimento_mensalidade" class="form-select">
             <option value="0">Não informado</option>
@@ -56,4 +67,15 @@
     </form>
   </div>
 </div>
+
+<script>
+const CUSTOS_PLANO = { '100GB': 315.00, 'ILIMITADO': 576.00, 'PAUSADO': 36.00 };
+function sugerirCusto() {
+  const plano = document.getElementById('tipo_plano').value;
+  const campo = document.getElementById('custo_mensalidade');
+  if (plano && CUSTOS_PLANO[plano] !== undefined && !campo.value) {
+    campo.value = CUSTOS_PLANO[plano].toFixed(2);
+  }
+}
+</script>
 {% endblock %}

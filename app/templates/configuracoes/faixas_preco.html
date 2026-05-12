@@ -5,16 +5,17 @@
   <h4><i class="bi bi-table"></i> Tabela de Preços — Diária</h4>
 </div>
 
-<div class="row g-3">
-  <div class="col-md-7">
-    <div class="card border-0 shadow-sm">
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white fw-bold"><i class="bi bi-wifi"></i> Plano 100GB</div>
       <div class="table-responsive">
         <table class="table mb-0">
           <thead class="table-light">
             <tr><th>De (dias)</th><th>Até (dias)</th><th>R$/dia</th><th></th></tr>
           </thead>
           <tbody>
-            {% for f in faixas %}
+            {% for f in faixas_100gb %}
             <tr class="{{ '' if f.ativo else 'text-muted text-decoration-line-through' }}">
               <td>{{ f.dias_min }}</td>
               <td>{{ f.dias_max }}</td>
@@ -37,6 +38,40 @@
     </div>
   </div>
 
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white fw-bold"><i class="bi bi-infinity"></i> Plano Ilimitado</div>
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead class="table-light">
+            <tr><th>De (dias)</th><th>Até (dias)</th><th>R$/dia</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for f in faixas_ilimitado %}
+            <tr class="{{ '' if f.ativo else 'text-muted text-decoration-line-through' }}">
+              <td>{{ f.dias_min }}</td>
+              <td>{{ f.dias_max }}</td>
+              <td>{{ f.valor_por_dia | brl }}</td>
+              <td>
+                {% if f.ativo %}
+                <form method="post" action="/configuracoes/faixas-preco/{{ f.id }}/excluir" class="d-inline"
+                      onsubmit="return confirmar('Remover esta faixa?')">
+                  <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted py-3">Nenhuma faixa cadastrada</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
   <div class="col-md-5">
     <div class="card border-0 shadow-sm">
       <div class="card-header bg-white fw-bold">Nova Faixa</div>
@@ -45,6 +80,13 @@
         <div class="alert alert-danger py-2 small">{{ erros }}</div>
         {% endif %}
         <form method="post" action="/configuracoes/faixas-preco/nova">
+          <div class="mb-3">
+            <label class="form-label">Plano</label>
+            <select name="tipo_plano" class="form-select">
+              <option value="100GB">100GB</option>
+              <option value="ILIMITADO">Ilimitado</option>
+            </select>
+          </div>
           <div class="mb-3">
             <label class="form-label">De (dias)</label>
             <input type="number" name="dias_min" class="form-control" min="1" required>

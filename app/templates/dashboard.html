@@ -88,12 +88,13 @@
     <table class="table table-hover mb-0">
       <thead class="table-light">
         <tr>
-          <th>Equipamento</th><th>Nº Série</th><th>Plano</th><th>Status</th><th>Dia venc.</th><th>Faltam</th>
+          <th>Nº Starlink</th><th>Equipamento</th><th>Nº Série</th><th>Plano</th><th>Status</th><th>Dia venc.</th><th>Faltam</th>
         </tr>
       </thead>
       <tbody>
         {% for e in vencimentos %}
         <tr class="{{ 'table-danger' if e.dias_faltam <= 2 else ('table-warning' if e.dias_faltam <= 5 else '') }}">
+          <td>{{ e.numero_starlink or '—' }}</td>
           <td>{{ e.modelo }}</td>
           <td><code>{{ e.numero_serie }}</code></td>
           <td>{{ e.tipo_plano or '—' }}</td>

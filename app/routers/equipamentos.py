@@ -44,7 +44,7 @@ def criar(
     numero_serie: str = Form(...), numero_starlink: str = Form(""),
     modelo: str = Form(...), tipo_plano: str = Form(""),
     vencimento_mensalidade: int = Form(0), status: str = Form("disponivel"),
-    descricao: str = Form(""),
+    custo_mensalidade: float = Form(0), descricao: str = Form(""),
     user: dict = Depends(require_admin), db: Client = Depends(get_db),
 ):
     try:
@@ -52,6 +52,7 @@ def criar(
             numero_serie=numero_serie, numero_starlink=numero_starlink or None,
             modelo=modelo, tipo_plano=tipo_plano or None,
             vencimento_mensalidade=vencimento_mensalidade if vencimento_mensalidade else None,
+            custo_mensalidade=custo_mensalidade if custo_mensalidade else None,
             status=status, descricao=descricao or None,
         )
     except (ValidationError, ValueError) as e:
@@ -83,7 +84,7 @@ def editar(
     numero_serie: str = Form(...), numero_starlink: str = Form(""),
     modelo: str = Form(...), tipo_plano: str = Form(""),
     vencimento_mensalidade: int = Form(0), status: str = Form("disponivel"),
-    descricao: str = Form(""),
+    custo_mensalidade: float = Form(0), descricao: str = Form(""),
     user: dict = Depends(require_admin), db: Client = Depends(get_db),
 ):
     payload = {
@@ -92,6 +93,7 @@ def editar(
         "modelo": modelo,
         "tipo_plano": tipo_plano or None,
         "vencimento_mensalidade": vencimento_mensalidade if vencimento_mensalidade else None,
+        "custo_mensalidade": custo_mensalidade if custo_mensalidade else None,
         "status": status,
         "descricao": descricao or None,
     }

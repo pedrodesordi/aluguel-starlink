@@ -32,7 +32,7 @@
       <thead class="table-light">
         <tr>
           <th>Nº Série</th><th>Nº Starlink</th><th>Modelo</th><th>Plano</th>
-          <th>Venc. Mensal.</th><th>Status</th>
+          <th>Custo Mensal</th><th>Venc. Mensal.</th><th>Status</th>
           {% if user.perfil == 'admin' %}<th></th>{% endif %}
         </tr>
       </thead>
@@ -43,6 +43,7 @@
           <td>{{ e.numero_starlink or '—' }}</td>
           <td>{{ e.modelo }}</td>
           <td>{{ e.tipo_plano or '—' }}</td>
+          <td>{{ e.custo_mensalidade | brl if e.custo_mensalidade else '—' }}</td>
           <td>
             {% if e.vencimento_mensalidade %}
               Dia {{ e.vencimento_mensalidade }}
@@ -56,7 +57,7 @@
           {% endif %}
         </tr>
         {% else %}
-        <tr><td colspan="7" class="text-center text-muted py-3">Nenhum equipamento encontrado</td></tr>
+        <tr><td colspan="8" class="text-center text-muted py-3">Nenhum equipamento encontrado</td></tr>
         {% endfor %}
       </tbody>
     </table>

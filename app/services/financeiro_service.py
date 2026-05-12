@@ -55,7 +55,7 @@ def get_vencimentos_proximos(db: Client, dias: int = 10) -> list:
 
     res = (
         db.table("equipamentos")
-        .select("id,modelo,numero_serie,tipo_plano,vencimento_mensalidade,status")
+        .select("id,modelo,numero_serie,numero_starlink,tipo_plano,vencimento_mensalidade,status")
         .not_.is_("vencimento_mensalidade", "null")
         .neq("status", "baixado")
         .execute()

@@ -47,15 +47,15 @@ def listar(
 @router.get("/novo")
 def novo_form(request: Request, user: dict = Depends(get_current_user), db: Client = Depends(get_db)):
     clientes = db.table("clientes").select("id,nome").eq("ativo", True).order("nome").execute().data
-    equipamentos = db.table("equipamentos").select("id,modelo,numero_serie").eq("status", "disponivel").execute().data
+    equipamentos = db.table("equipamentos").select("id,modelo,numero_serie,tipo_plano").eq("status", "disponivel").execute().data
     return templates.TemplateResponse("alugueis/form.html", {
         "request": request, "user": user, "clientes": clientes, "equipamentos": equipamentos, "aluguel": {},
     })
 
 
 @router.get("/calcular-diaria", response_class=HTMLResponse)
-def calcular_diaria(dias: int = Query(...), user: dict = Depends(get_current_user), db: Client = Depends(get_db)):
-    valor = calcular_valor_diaria(dias, db)
+def calcular_diaria(dias: int = Query(...), tipo_plano: str = Query("100GB"), user: dict = Depends(get_current_user), db: Client = Depends(get_db)):
+    valor = calcular_valor_diaria(dias, db, tipo_plano)
     if valor:
         return f'<span class="text-success fw-bold">R$ {float(valor):.2f}/dia</span> <input type="hidden" name="_valor_sugerido" value="{float(valor)}">'
     return '<span class="text-warning">Nenhuma faixa cadastrada para este período</span>'

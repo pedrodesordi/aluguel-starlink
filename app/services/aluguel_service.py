@@ -11,13 +11,14 @@ def calcular_multa_corrente(aluguel: dict) -> Decimal:
     return Decimal(str(aluguel["valor_multa_dia"])) * dias
 
 
-def calcular_valor_diaria(dias: int, db: Client) -> Decimal | None:
+def calcular_valor_diaria(dias: int, db: Client, tipo_plano: str = "100GB") -> Decimal | None:
     res = (
         db.table("faixas_preco_diaria")
         .select("valor_por_dia")
         .lte("dias_min", dias)
         .gte("dias_max", dias)
         .eq("ativo", True)
+        .eq("tipo_plano", tipo_plano)
         .execute()
     )
     if res.data:
