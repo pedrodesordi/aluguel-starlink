@@ -207,6 +207,20 @@ def cancelar(
     return RedirectResponse(f"/alugueis/{id}", status_code=303)
 
 
+@router.post("/{id}/apagar")
+def apagar(id: str, request: Request, user: dict = Depends(get_current_user), db: Client = Depends(get_db)):
+    aluguel = db.table("alugueis").select("status").eq("id", id).execute().data
+    if not aluguel or aluguel[0]["status"] != "cancelado":
+        _flash(request, "danger", "Só é possível apagar aluguéis cancelados.")
+        return RedirectResponse(f"/alugueis/{id}", status_code=303)
+
+    db.table("termos_responsabilidade").delete().eq("aluguel_id", id).execute()
+    db.table("alugueis").delete().eq("id", id).execute()
+
+    _flash(request, "success", "Aluguel apagado.")
+    return RedirectResponse("/alugueis/", status_code=303)
+
+
 @router.get("/{id}")
 def detalhe(id: str, request: Request, user: dict = Depends(get_current_user), db: Client = Depends(get_db)):
     aluguel = (

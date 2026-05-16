@@ -14,6 +14,12 @@
       <i class="bi bi-x-circle"></i> Cancelar
     </button>
   </div>
+  {% elif aluguel.status == 'cancelado' %}
+  <div class="ms-auto">
+    <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#modalApagar">
+      <i class="bi bi-trash"></i> Apagar registro
+    </button>
+  </div>
   {% endif %}
 </div>
 
@@ -211,6 +217,28 @@
           <button type="submit" class="btn btn-danger"><i class="bi bi-x-circle"></i> Confirmar cancelamento</button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if aluguel.status == 'cancelado' %}
+<div class="modal fade" id="modalApagar" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger"><i class="bi bi-trash"></i> Apagar aluguel</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted">Esta ação é irreversível. O registro do aluguel e o termo de responsabilidade serão removidos permanentemente.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Voltar</button>
+        <form method="post" action="/alugueis/{{ aluguel.id }}/apagar">
+          <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i> Confirmar exclusão</button>
+        </form>
+      </div>
     </div>
   </div>
 </div>
