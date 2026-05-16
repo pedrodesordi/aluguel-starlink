@@ -36,7 +36,10 @@
   <table>
     <tr><th>Início</th><td>{{ aluguel.data_inicio }}</td><th>Fim previsto</th><td>{{ aluguel.data_fim_prevista }}</td></tr>
     <tr><th>Modalidade</th><td>{{ 'Diária' if aluguel.modalidade == 'diaria' else 'Mensal' }}</td>
-        <th>Valor</th><td>R$ {{ "%.2f"|format(aluguel.valor_contratado) }}</td></tr>
+        <th>Valor total</th><td>R$ {{ "%.2f"|format(aluguel.valor_total_previsto) }}</td></tr>
+    {% if aluguel.modalidade == 'diaria' %}
+    <tr><th>Valor por dia</th><td colspan="3">R$ {{ "%.2f"|format(aluguel.valor_contratado) }}</td></tr>
+    {% endif %}
     <tr><th>Multa por dia de atraso</th><td colspan="3">R$ {{ "%.2f"|format(aluguel.valor_multa_dia) }}</td></tr>
   </table>
 
