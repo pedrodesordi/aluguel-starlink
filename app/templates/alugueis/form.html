@@ -17,12 +17,19 @@
       <div class="row g-3">
         <div class="col-md-6">
           <label class="form-label">Cliente <span class="text-danger">*</span></label>
-          <select name="cliente_id" class="form-select" required {{ 'disabled' if editando }}>
-            <option value="">Selecione...</option>
-            {% for c in clientes %}
-            <option value="{{ c.id }}" {{ 'selected' if aluguel.cliente_id == c.id }}>{{ c.nome }}</option>
-            {% endfor %}
-          </select>
+          <div class="input-group">
+            <select name="cliente_id" id="cliente_id" class="form-select" required {{ 'disabled' if editando }}>
+              <option value="">Selecione...</option>
+              {% for c in clientes %}
+              <option value="{{ c.id }}" {{ 'selected' if aluguel.cliente_id == c.id }}>{{ c.nome }}</option>
+              {% endfor %}
+            </select>
+            {% if not editando %}
+            <button type="button" class="btn btn-outline-secondary" title="Cadastrar novo cliente" data-bs-toggle="modal" data-bs-target="#modalNovoCliente">
+              <i class="bi bi-person-plus"></i>
+            </button>
+            {% endif %}
+          </div>
           {% if editando %}<input type="hidden" name="cliente_id" value="{{ aluguel.cliente_id }}">{% endif %}
         </div>
         <div class="col-md-6">
@@ -87,7 +94,84 @@
   </div>
 </div>
 
+<!-- Modal cadastro rápido de cliente -->
+<div class="modal fade" id="modalNovoCliente" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-person-plus"></i> Novo Cliente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="erroModalCliente" class="alert alert-danger d-none"></div>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Nome <span class="text-danger">*</span></label>
+            <input type="text" id="mc_nome" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">CPF <span class="text-danger">*</span></label>
+            <input type="text" id="mc_cpf" class="form-control cpf-mask" placeholder="000.000.000-00" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Telefone <span class="text-danger">*</span></label>
+            <input type="text" id="mc_telefone" class="form-control" placeholder="(00) 90000-0000" required>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="salvarClienteRapido()">
+          <i class="bi bi-check-lg"></i> Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+async function salvarClienteRapido() {
+  const nome = document.getElementById('mc_nome').value.trim();
+  const cpf = document.getElementById('mc_cpf').value.trim();
+  const telefone = document.getElementById('mc_telefone').value.trim();
+  const erroEl = document.getElementById('erroModalCliente');
+
+  if (!nome || !cpf || !telefone) {
+    erroEl.textContent = 'Preencha todos os campos obrigatórios.';
+    erroEl.classList.remove('d-none');
+    return;
+  }
+
+  const body = new FormData();
+  body.append('nome', nome);
+  body.append('cpf', cpf);
+  body.append('telefone', telefone);
+
+  const res = await fetch('/clientes/rapido', { method: 'POST', body });
+  const json = await res.json();
+
+  if (!res.ok) {
+    const msgs = Object.values(json.erro || {}).join(', ') || 'Erro ao salvar.';
+    erroEl.textContent = msgs;
+    erroEl.classList.remove('d-none');
+    return;
+  }
+
+  const select = document.getElementById('cliente_id');
+  const opt = new Option(json.nome, json.id, true, true);
+  select.add(opt);
+
+  erroEl.classList.add('d-none');
+  document.getElementById('mc_nome').value = '';
+  document.getElementById('mc_cpf').value = '';
+  document.getElementById('mc_telefone').value = '';
+  bootstrap.Modal.getInstance(document.getElementById('modalNovoCliente')).hide();
+}
+
+document.getElementById('modalNovoCliente').addEventListener('hidden.bs.modal', function() {
+  document.getElementById('erroModalCliente').classList.add('d-none');
+});
+
 function calcularDiaria() {
   const inicio = document.getElementById('data_inicio').value;
   const fim = document.getElementById('data_fim_prevista').value;

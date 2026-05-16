@@ -21,8 +21,9 @@
           {% if erros and erros.cpf %}<div class="invalid-feedback">{{ erros.cpf }}</div>{% endif %}
         </div>
         <div class="col-md-6">
-          <label class="form-label">Telefone</label>
-          <input type="text" name="telefone" class="form-control" value="{{ cliente.telefone or '' }}" placeholder="(00) 90000-0000">
+          <label class="form-label">Telefone <span class="text-danger">*</span></label>
+          <input type="text" name="telefone" class="form-control {{ 'is-invalid' if erros and erros.telefone }}" value="{{ cliente.telefone or '' }}" placeholder="(00) 90000-0000" required>
+          {% if erros and erros.telefone %}<div class="invalid-feedback">{{ erros.telefone }}</div>{% endif %}
         </div>
         <div class="col-12">
           <label class="form-label">Email</label>

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from app.templates_config import templates
 from pydantic import ValidationError
 from supabase import Client
@@ -27,6 +27,22 @@ def listar(request: Request, nome: str = "", user: dict = Depends(get_current_us
     })
 
 
+@router.post("/rapido")
+def criar_rapido(
+    request: Request,
+    nome: str = Form(...), cpf: str = Form(...), telefone: str = Form(...),
+    user: dict = Depends(get_current_user), db: Client = Depends(get_db),
+):
+    try:
+        data = ClienteCreate(nome=nome, cpf=cpf, telefone=telefone)
+    except ValidationError as e:
+        erros = {err["loc"][0]: err["msg"] for err in e.errors()}
+        return JSONResponse({"erro": erros}, status_code=422)
+    res = db.table("clientes").insert(data.model_dump(exclude_none=True)).execute()
+    novo = res.data[0]
+    return JSONResponse({"id": novo["id"], "nome": novo["nome"]})
+
+
 @router.get("/novo")
 def novo_form(request: Request, user: dict = Depends(get_current_user)):
     return templates.TemplateResponse("clientes/form.html", {"request": request, "user": user, "cliente": {}})
@@ -35,13 +51,13 @@ def novo_form(request: Request, user: dict = Depends(get_current_user)):
 @router.post("/novo")
 def criar(
     request: Request,
-    nome: str = Form(...), cpf: str = Form(...), telefone: str = Form(""),
+    nome: str = Form(...), cpf: str = Form(...), telefone: str = Form(...),
     email: str = Form(""), endereco: str = Form(""), cidade: str = Form(""),
     estado: str = Form(""), observacoes: str = Form(""),
     user: dict = Depends(get_current_user), db: Client = Depends(get_db),
 ):
     try:
-        data = ClienteCreate(nome=nome, cpf=cpf, telefone=telefone or None, email=email or None,
+        data = ClienteCreate(nome=nome, cpf=cpf, telefone=telefone, email=email or None,
                              endereco=endereco or None, cidade=cidade or None,
                              estado=estado or None, observacoes=observacoes or None)
     except ValidationError as e:
@@ -84,13 +100,13 @@ def editar_form(id: str, request: Request, user: dict = Depends(get_current_user
 @router.post("/{id}/editar")
 def editar(
     id: str, request: Request,
-    nome: str = Form(...), cpf: str = Form(...), telefone: str = Form(""),
+    nome: str = Form(...), cpf: str = Form(...), telefone: str = Form(...),
     email: str = Form(""), endereco: str = Form(""), cidade: str = Form(""),
     estado: str = Form(""), observacoes: str = Form(""),
     user: dict = Depends(get_current_user), db: Client = Depends(get_db),
 ):
     try:
-        data = ClienteCreate(nome=nome, cpf=cpf, telefone=telefone or None, email=email or None,
+        data = ClienteCreate(nome=nome, cpf=cpf, telefone=telefone, email=email or None,
                              endereco=endereco or None, cidade=cidade or None,
                              estado=estado or None, observacoes=observacoes or None)
     except ValidationError as e:

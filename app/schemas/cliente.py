@@ -6,7 +6,7 @@ from pydantic import BaseModel, field_validator
 class ClienteCreate(BaseModel):
     nome: str
     cpf: str
-    telefone: str | None = None
+    telefone: str
     email: str | None = None
     endereco: str | None = None
     cidade: str | None = None
