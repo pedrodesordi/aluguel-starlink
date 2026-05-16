@@ -145,7 +145,8 @@
             {% if p.status in ['pendente','vencido'] and user.perfil == 'admin' %}
             <button class="btn btn-xs btn-outline-success ms-1"
                     data-bs-toggle="modal" data-bs-target="#modalPagar"
-                    data-pag-id="{{ p.id }}" data-pag-target="status-pag-{{ p.id }}">
+                    data-pag-id="{{ p.id }}" data-pag-target="status-pag-{{ p.id }}"
+                    data-pag-valor="{{ p.valor }}">
               <i class="bi bi-check2"></i> Pagar
             </button>
             {% endif %}
@@ -176,13 +177,22 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <label class="form-label">Forma de pagamento</label>
-        <select id="forma_pag_select" class="form-select mb-3">
-          <option value="pix">PIX</option>
-          <option value="cartao">Cartão</option>
-          <option value="dinheiro">Dinheiro</option>
-        </select>
-        <label class="form-label">Desconto (R$)</label>
+        <label class="form-label">Formas de pagamento</label>
+        <div id="formas_container">
+          <div class="forma-linha d-flex gap-2 mb-2">
+            <select class="form-select form-select-sm forma-select">
+              <option value="pix">PIX</option>
+              <option value="cartao">Cartão</option>
+              <option value="dinheiro">Dinheiro</option>
+            </select>
+            <input type="number" class="form-control form-control-sm forma-valor" step="0.01" min="0" placeholder="Valor">
+            <button type="button" class="btn btn-sm btn-outline-danger remover-forma">✕</button>
+          </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary mt-1" id="btn_add_forma">+ Forma</button>
+        <div class="mt-2 small" id="total_formas_info"></div>
+        <input type="hidden" id="formas_json_input" name="formas_json">
+        <label class="form-label mt-3">Desconto (R$)</label>
         <input type="number" id="desconto_input" name="desconto" class="form-control" min="0" step="0.01" value="0">
       </div>
       <div class="modal-footer py-2">
@@ -250,16 +260,65 @@ function copiarLink() {
   navigator.clipboard.writeText(el.value).then(() => alert('Link copiado!'));
 }
 
-document.getElementById('modalPagar').addEventListener('show.bs.modal', function(e) {
-  const btn = e.relatedTarget;
-  const pagId = btn.dataset.pagId;
-  const pagTarget = btn.dataset.pagTarget;
+// Reutiliza o mesmo helper do financeiro/list.html inline
+function _formasAtualizar(container, infoEl, valorTotal) {
+  let soma = 0;
+  container.querySelectorAll('.forma-linha').forEach(l => { soma += parseFloat(l.querySelector('.forma-valor').value) || 0; });
+  if (soma > 0) {
+    const diff = Math.abs(soma - valorTotal);
+    infoEl.innerHTML = diff < 0.01
+      ? `<span class="text-success">Total: R$ ${soma.toFixed(2).replace('.', ',')}</span>`
+      : `<span class="text-danger">Soma R$ ${soma.toFixed(2).replace('.', ',')} ≠ R$ ${valorTotal.toFixed(2).replace('.', ',')}</span>`;
+  } else { infoEl.innerHTML = ''; }
+}
+function _formasSerializar(container) {
+  const formas = [];
+  container.querySelectorAll('.forma-linha').forEach(l => {
+    const forma = l.querySelector('.forma-select').value;
+    const valor = parseFloat(l.querySelector('.forma-valor').value) || 0;
+    if (valor > 0) formas.push({ forma, valor });
+  });
+  return formas;
+}
+(function() {
+  const modal = document.getElementById('modalPagar');
+  const container = document.getElementById('formas_container');
+  const infoEl = document.getElementById('total_formas_info');
   const confirmBtn = document.getElementById('btn_confirmar_pagar');
-  confirmBtn.setAttribute('hx-post', `/financeiro/pagamentos/${pagId}/pagar`);
-  confirmBtn.setAttribute('hx-target', `#${pagTarget}`);
-  confirmBtn.setAttribute('hx-include', '#forma_pag_select, #desconto_input');
-  htmx.process(confirmBtn);
-  document.getElementById('desconto_input').value = '0';
-});
+  modal.addEventListener('show.bs.modal', function(e) {
+    const btn = e.relatedTarget;
+    const pagValor = parseFloat(btn.dataset.pagValor) || 0;
+    confirmBtn.setAttribute('hx-post', `/financeiro/pagamentos/${btn.dataset.pagId}/pagar`);
+    confirmBtn.setAttribute('hx-target', `#${btn.dataset.pagTarget}`);
+    confirmBtn.setAttribute('hx-include', '#formas_json_input, #desconto_input');
+    htmx.process(confirmBtn);
+    document.getElementById('desconto_input').value = '0';
+    container.innerHTML = `<div class="forma-linha d-flex gap-2 mb-2">
+      <select class="form-select form-select-sm forma-select">
+        <option value="pix">PIX</option><option value="cartao">Cartão</option><option value="dinheiro">Dinheiro</option>
+      </select>
+      <input type="number" class="form-control form-control-sm forma-valor" step="0.01" min="0" value="${pagValor.toFixed(2)}" placeholder="Valor">
+      <button type="button" class="btn btn-sm btn-outline-danger remover-forma">✕</button>
+    </div>`;
+    container.dataset.pagValor = pagValor;
+    infoEl.innerHTML = '';
+  });
+  container.addEventListener('input', () => _formasAtualizar(container, infoEl, parseFloat(container.dataset.pagValor) || 0));
+  container.addEventListener('click', e => {
+    if (e.target.closest('.remover-forma') && container.querySelectorAll('.forma-linha').length > 1) {
+      e.target.closest('.forma-linha').remove();
+      _formasAtualizar(container, infoEl, parseFloat(container.dataset.pagValor) || 0);
+    }
+  });
+  document.getElementById('btn_add_forma').addEventListener('click', () => {
+    const nova = container.querySelector('.forma-linha').cloneNode(true);
+    nova.querySelector('.forma-valor').value = '';
+    container.appendChild(nova);
+  });
+  confirmBtn.addEventListener('click', () => {
+    document.getElementById('formas_json_input').value = JSON.stringify(_formasSerializar(container));
+    htmx.process(confirmBtn);
+  }, true);
+})();
 </script>
 {% endblock %}

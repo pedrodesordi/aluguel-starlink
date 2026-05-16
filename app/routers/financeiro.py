@@ -1,3 +1,4 @@
+import json as json_lib
 from datetime import date
 
 from fastapi import APIRouter, Depends, Form, Request
@@ -43,21 +44,48 @@ def listar(
 @router.post("/pagamentos/{id}/pagar", response_class=HTMLResponse)
 def marcar_pago(
     id: str, request: Request,
-    forma_pagamento: str = Form(None),
+    formas_json: str = Form(""),
     desconto: float = Form(0),
     user: dict = Depends(require_admin), db: Client = Depends(get_db),
 ):
     desconto = max(0.0, desconto or 0.0)
-    update_data: dict = {"status": "pago", "data_pagamento": str(date.today()), "desconto": desconto}
-    if forma_pagamento:
-        update_data["forma_pagamento"] = forma_pagamento
-    pag = db.table("pagamentos").update(update_data).eq("id", id).execute().data[0]
     forma_labels = {"pix": "PIX", "cartao": "Cartão", "dinheiro": "Dinheiro"}
-    forma_label = forma_labels.get(forma_pagamento or "", "")
-    extra = f' <span class="text-muted small">{forma_label}</span>' if forma_label else ""
+
+    try:
+        formas = json_lib.loads(formas_json) if formas_json else []
+    except Exception:
+        formas = []
+
+    if len(formas) == 1:
+        forma_pagamento = formas[0].get("forma")
+    elif len(formas) > 1:
+        forma_pagamento = "misto"
+    else:
+        forma_pagamento = None
+
+    update_data: dict = {
+        "status": "pago",
+        "data_pagamento": str(date.today()),
+        "desconto": desconto,
+        "forma_pagamento": forma_pagamento,
+        "formas_detalhe": formas if formas else None,
+    }
+    pag = db.table("pagamentos").update(update_data).eq("id", id).execute().data[0]
+
+    if formas and len(formas) > 1:
+        partes = " + ".join(
+            f'{forma_labels.get(f["forma"], f["forma"])} R$ {float(f["valor"]):,.2f}'.replace(",", "X").replace(".", ",").replace("X", ".")
+            for f in formas
+        )
+        extra = f' <span class="text-muted small">{partes}</span>'
+    else:
+        forma_label = forma_labels.get(forma_pagamento or "", "")
+        extra = f' <span class="text-muted small">{forma_label}</span>' if forma_label else ""
+
     if desconto > 0:
         liquido = float(pag["valor"]) - desconto
         extra += f' <span class="text-danger small">-R$ {desconto:,.2f}</span> <span class="text-muted small">= R$ {liquido:,.2f}</span>'
+
     estornar = (
         f'<button class="btn btn-xs btn-outline-warning ms-1"'
         f' hx-post="/financeiro/pagamentos/{id}/estornar"'
@@ -78,6 +106,7 @@ def estornar_pagamento(
         "data_pagamento": None,
         "forma_pagamento": None,
         "desconto": 0,
+        "formas_detalhe": None,
     }).eq("id", id).execute()
     pagar_btn = (
         f'<button class="btn btn-xs btn-outline-success ms-1"'
