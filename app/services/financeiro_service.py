@@ -1,5 +1,5 @@
 import calendar
-from datetime import date
+from datetime import date, timedelta
 
 from supabase import Client
 
@@ -19,15 +19,17 @@ def gerar_parcelas_mensais(aluguel: dict, db: Client) -> None:
     cursor = inicio
     i = 1
     while cursor <= fim:
+        proximo = _proximo_mes(cursor)
+        vencimento = min(proximo - timedelta(days=1), fim)
         parcelas.append({
             "aluguel_id": aluguel["id"],
             "descricao": f"Mensalidade {cursor.strftime('%m/%Y')} - Parcela {i}",
             "valor": float(aluguel["valor_contratado"]),
-            "data_vencimento": str(cursor),
+            "data_vencimento": str(vencimento),
             "status": "pendente",
             "tipo": "mensalidade",
         })
-        cursor = _proximo_mes(cursor)
+        cursor = proximo
         i += 1
     if parcelas:
         db.table("pagamentos").insert(parcelas).execute()
@@ -38,7 +40,7 @@ def gerar_pagamento_diaria(aluguel: dict, db: Client) -> None:
         "aluguel_id": aluguel["id"],
         "descricao": f"Aluguel diário — {aluguel['data_inicio']} a {aluguel['data_fim_prevista']}",
         "valor": float(aluguel["valor_total_previsto"]),
-        "data_vencimento": aluguel["data_inicio"],
+        "data_vencimento": aluguel["data_fim_prevista"],
         "status": "pendente",
         "tipo": "diaria",
     }).execute()
