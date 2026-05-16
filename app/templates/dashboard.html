@@ -2,6 +2,7 @@
 {% block title %}Dashboard — Aluguel Starlink{% endblock %}
 {% block head_extra %}
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 {% endblock %}
 {% block content %}
 <h4 class="mb-4"><i class="bi bi-speedometer2"></i> Dashboard</h4>
@@ -128,6 +129,15 @@
   </div>
 </div>
 {% endif %}
+{% if user.perfil == 'admin' %}
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white fw-bold">
+    <i class="bi bi-bar-chart-line"></i> Receita × Despesa — últimos 6 meses
+  </div>
+  <div class="card-body">
+    <canvas id="graficoFinanceiro" height="80"></canvas>
+  </div>
+</div>
 {% endif %}
 
 <div class="card border-0 shadow-sm mb-4">
@@ -175,6 +185,31 @@
 {% block scripts_extra %}
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales/pt-br.global.min.js"></script>
+<script>
+{% if user.perfil == 'admin' %}
+document.addEventListener('DOMContentLoaded', function() {
+  const g = {{ grafico | tojson }};
+  new Chart(document.getElementById('graficoFinanceiro'), {
+    type: 'bar',
+    data: {
+      labels: g.labels,
+      datasets: [
+        { label: 'Receita', data: g.receita, backgroundColor: 'rgba(25,135,84,0.75)', order: 2 },
+        { label: 'Despesa', data: g.despesa, backgroundColor: 'rgba(220,53,69,0.75)', order: 2 },
+        { label: 'Lucro', data: g.lucro, type: 'line', borderColor: '#0d6efd',
+          backgroundColor: 'transparent', tension: 0.3, pointRadius: 5, borderWidth: 2, order: 1 },
+      ]
+    },
+    options: {
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        y: { ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits: 2}) } }
+      }
+    }
+  });
+});
+{% endif %}
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const cal = new FullCalendar.Calendar(document.getElementById('calendario'), {

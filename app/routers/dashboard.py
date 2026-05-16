@@ -1,4 +1,5 @@
 import json
+from datetime import date
 
 from fastapi import APIRouter, Depends, Request
 from app.templates_config import templates
@@ -54,6 +55,40 @@ def dashboard(request: Request, user: dict = Depends(get_current_user), db: Clie
             "color": "#198754",
         })
 
+    # Gráfico financeiro — últimos 6 meses
+    hoje = date.today()
+    meses, labels = [], []
+    for i in range(5, -1, -1):
+        mes = hoje.month - i
+        ano = hoje.year
+        while mes <= 0:
+            mes += 12
+            ano -= 1
+        meses.append(f"{ano}-{mes:02d}")
+        labels.append(date(ano, mes, 1).strftime("%b/%y"))
+
+    pags_pagos = (
+        db.table("pagamentos").select("valor,desconto,data_vencimento")
+        .eq("status", "pago").gte("data_vencimento", meses[0] + "-01").execute().data
+    )
+    receita_por_mes: dict[str, float] = {m: 0.0 for m in meses}
+    for p in pags_pagos:
+        m = (p.get("data_vencimento") or "")[:7]
+        if m in receita_por_mes:
+            receita_por_mes[m] += float(p["valor"]) - float(p.get("desconto") or 0)
+
+    despesa_mensal = sum(
+        float(e.get("custo_mensalidade") or 0)
+        for e in db.table("equipamentos").select("custo_mensalidade").execute().data
+    )
+
+    grafico = {
+        "labels": labels,
+        "receita": [round(receita_por_mes[m], 2) for m in meses],
+        "despesa": [round(despesa_mensal, 2)] * 6,
+        "lucro": [round(receita_por_mes[m] - despesa_mensal, 2) for m in meses],
+    }
+
     flash = request.session.pop("flash", None)
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
@@ -63,4 +98,5 @@ def dashboard(request: Request, user: dict = Depends(get_current_user), db: Clie
         "vencimentos": vencimentos,
         "flash": flash,
         "eventos_json": json.dumps(eventos),
+        "grafico": grafico,
     })
