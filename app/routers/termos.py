@@ -9,6 +9,11 @@ from app.services.termo_service import registrar_aceite
 router = APIRouter(tags=["termos"])
 
 
+def _calcular_valor_liquido(aluguel_id: str, db: Client) -> float:
+    pags = db.table("pagamentos").select("valor,desconto").eq("aluguel_id", aluguel_id).neq("tipo", "multa").execute().data
+    return sum(float(p["valor"]) - float(p.get("desconto") or 0) for p in pags)
+
+
 @router.get("/{token}")
 def ver_termo(token: str, request: Request, db: Client = Depends(get_db)):
     res = db.table("termos_responsabilidade").select("*,alugueis(*,clientes(*),equipamentos(*))").eq("token", token).execute()
@@ -17,19 +22,20 @@ def ver_termo(token: str, request: Request, db: Client = Depends(get_db)):
 
     termo = res.data[0]
     aluguel = termo.get("alugueis", {})
+    valor_liquido = _calcular_valor_liquido(aluguel["id"], db) if aluguel.get("id") else 0
 
     if termo["status"] == "aceito":
         return templates.TemplateResponse("termos/aceito.html", {
-            "request": request, "termo": termo, "aluguel": aluguel,
+            "request": request, "termo": termo, "aluguel": aluguel, "valor_liquido": valor_liquido,
         })
     if termo["status"] == "expirado":
         return templates.TemplateResponse("termos/aceite.html", {
-            "request": request, "termo": termo, "aluguel": aluguel,
+            "request": request, "termo": termo, "aluguel": aluguel, "valor_liquido": valor_liquido,
             "erro": "Este link expirou. Solicite um novo link ao responsável.",
         })
 
     return templates.TemplateResponse("termos/aceite.html", {
-        "request": request, "termo": termo, "aluguel": aluguel,
+        "request": request, "termo": termo, "aluguel": aluguel, "valor_liquido": valor_liquido,
     })
 
 
@@ -42,8 +48,10 @@ def aceitar_termo(token: str, request: Request, db: Client = Depends(get_db)):
     except ValueError as e:
         res = db.table("termos_responsabilidade").select("*,alugueis(*,clientes(*),equipamentos(*))").eq("token", token).execute()
         termo = res.data[0] if res.data else {}
+        aluguel = termo.get("alugueis", {})
+        valor_liquido = _calcular_valor_liquido(aluguel["id"], db) if aluguel.get("id") else 0
         return templates.TemplateResponse("termos/aceite.html", {
-            "request": request, "termo": termo, "aluguel": termo.get("alugueis", {}),
+            "request": request, "termo": termo, "aluguel": aluguel, "valor_liquido": valor_liquido,
             "erro": str(e),
         }, status_code=400)
 

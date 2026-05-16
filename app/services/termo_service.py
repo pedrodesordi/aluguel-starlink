@@ -32,7 +32,9 @@ def registrar_aceite(token: str, ip: str, user_agent: str, db: Client) -> dict:
     if aluguel_res.data:
         aluguel = aluguel_res.data[0]
         try:
-            pdf_path = _gerar_pdf(aluguel, termo, ip, agora)
+            pags = db.table("pagamentos").select("valor,desconto").eq("aluguel_id", aluguel["id"]).neq("tipo", "multa").execute().data
+            valor_liquido = sum(float(p["valor"]) - float(p.get("desconto") or 0) for p in pags)
+            pdf_path = _gerar_pdf(aluguel, termo, ip, agora, valor_liquido)
             db.table("termos_responsabilidade").update({"pdf_path": pdf_path}).eq("token", token).execute()
             termo["pdf_path"] = pdf_path
         except Exception as e:
@@ -42,7 +44,7 @@ def registrar_aceite(token: str, ip: str, user_agent: str, db: Client) -> dict:
     return termo
 
 
-def _gerar_pdf(aluguel: dict, termo: dict, ip: str, aceito_em: datetime) -> str:
+def _gerar_pdf(aluguel: dict, termo: dict, ip: str, aceito_em: datetime, valor_liquido: float = 0) -> str:
     try:
         from weasyprint import HTML
     except OSError as e:
@@ -58,6 +60,7 @@ def _gerar_pdf(aluguel: dict, termo: dict, ip: str, aceito_em: datetime) -> str:
         "termo": termo,
         "ip_aceite": ip,
         "aceito_em": aceito_em.strftime("%d/%m/%Y %H:%M:%S UTC"),
+        "valor_liquido": valor_liquido,
     })
 
     HTML(string=html_content).write_pdf(pdf_path)
