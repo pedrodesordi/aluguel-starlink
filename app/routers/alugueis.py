@@ -33,8 +33,18 @@ def listar(
         query = query.eq("status", status)
     alugueis = query.execute().data
 
-    # Adiciona multa corrente para aluguéis atrasados sem devolução
+    ids = [a["id"] for a in alugueis]
+    if ids:
+        pags = db.table("pagamentos").select("aluguel_id,valor,desconto").in_("aluguel_id", ids).neq("tipo", "multa").execute().data
+        liquido_por_aluguel: dict[str, float] = {}
+        for p in pags:
+            aid = p["aluguel_id"]
+            liquido_por_aluguel[aid] = liquido_por_aluguel.get(aid, 0.0) + float(p["valor"]) - float(p.get("desconto") or 0)
+    else:
+        liquido_por_aluguel = {}
+
     for a in alugueis:
+        a["valor_liquido"] = liquido_por_aluguel.get(a["id"], 0.0)
         if a["status"] == "atrasado" and not a.get("data_fim_real"):
             a["multa_corrente"] = float(calcular_multa_corrente(a))
 

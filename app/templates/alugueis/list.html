@@ -30,7 +30,8 @@
           <td>{{ a.data_fim_prevista | data_br }}</td>
           <td>{{ 'Diária' if a.modalidade == 'diaria' else 'Mensal' }}</td>
           <td>
-            {{ a.valor_contratado | brl }}
+            {{ a.valor_liquido | brl }}
+            <br><small class="text-muted">{{ a.valor_contratado | brl }}{{ '/dia' if a.modalidade == 'diaria' else '/mês' }}</small>
             {% if a.multa_corrente %}
             <br><small class="text-danger">+{{ a.multa_corrente | brl }} multa</small>
             {% endif %}
