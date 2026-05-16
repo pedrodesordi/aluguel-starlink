@@ -55,17 +55,18 @@ def dashboard(request: Request, user: dict = Depends(get_current_user), db: Clie
             "color": "#198754",
         })
 
-    # Gráfico financeiro — últimos 6 meses
+    # Gráfico financeiro — de abril/2026 até o mês atual
     hoje = date.today()
+    inicio_grafico = date(2026, 4, 1)
     meses, labels = [], []
-    for i in range(5, -1, -1):
-        mes = hoje.month - i
-        ano = hoje.year
-        while mes <= 0:
-            mes += 12
-            ano -= 1
+    ano, mes = inicio_grafico.year, inicio_grafico.month
+    while (ano, mes) <= (hoje.year, hoje.month):
         meses.append(f"{ano}-{mes:02d}")
         labels.append(date(ano, mes, 1).strftime("%b/%y"))
+        mes += 1
+        if mes > 12:
+            mes = 1
+            ano += 1
 
     pags_pagos = (
         db.table("pagamentos").select("valor,desconto,data_vencimento")
