@@ -81,8 +81,9 @@
         </div>
         <div class="col-md-4">
           <label class="form-label">Desconto (R$)</label>
-          <input type="number" step="0.01" name="desconto" class="form-control"
-                 value="0" min="0">
+          <input type="number" step="0.01" name="desconto" id="desconto" class="form-control"
+                 value="0" min="0" oninput="atualizarTotalComDesconto()">
+          <div id="total_com_desconto" class="form-text mt-1"></div>
         </div>
         <div class="col-12">
           <label class="form-label">Observações</label>
@@ -177,6 +178,32 @@ document.getElementById('modalNovoCliente').addEventListener('hidden.bs.modal', 
   document.getElementById('erroModalCliente').classList.add('d-none');
 });
 
+function atualizarTotalComDesconto() {
+  const modalidade = document.getElementById('modalidade').value;
+  const valorEl = document.getElementById('valor_contratado');
+  const descontoEl = document.getElementById('desconto');
+  const totalEl = document.getElementById('total_com_desconto');
+  const desconto = parseFloat(descontoEl.value) || 0;
+  if (desconto <= 0) { totalEl.innerHTML = ''; return; }
+
+  let total = 0;
+  if (modalidade === 'diaria') {
+    const inicio = document.getElementById('data_inicio').value;
+    const fim = document.getElementById('data_fim_prevista').value;
+    if (inicio && fim) {
+      const dias = Math.round((new Date(fim) - new Date(inicio)) / 86400000);
+      total = (parseFloat(valorEl.value) || 0) * dias;
+    }
+  } else {
+    total = parseFloat(valorEl.value) || 0;
+  }
+
+  const liquido = total - desconto;
+  if (total > 0) {
+    totalEl.innerHTML = `<span class="text-success fw-semibold">Total com desconto: R$ ${liquido.toFixed(2).replace('.', ',')}</span>`;
+  }
+}
+
 function calcularDiaria() {
   const inicio = document.getElementById('data_inicio').value;
   const fim = document.getElementById('data_fim_prevista').value;
@@ -195,11 +222,14 @@ function calcularDiaria() {
     .then(html => {
       sugestao.innerHTML = html;
       const match = html.match(/value="([\d.]+)"/);
-      if (match) document.getElementById('valor_contratado').value = parseFloat(match[1]);
+      if (match) {
+        document.getElementById('valor_contratado').value = parseFloat(match[1]);
+        atualizarTotalComDesconto();
+      }
     });
 }
 
-function atualizarCampos() { calcularDiaria(); }
+function atualizarCampos() { calcularDiaria(); atualizarTotalComDesconto(); }
 
 document.querySelector('[name=equipamento_id]').addEventListener('change', function() {
   const opt = this.options[this.selectedIndex];
