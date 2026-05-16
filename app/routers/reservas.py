@@ -186,14 +186,13 @@ def gerar_link(
     token = res.data[0]["token"]
     base = str(request.base_url).rstrip("/")
     _flash(request, "success", f"Link de reserva gerado: {base}/reservas/{token}")
-    destino = "/reservas/" if user.get("perfil") == "admin" else "/equipamentos/"
-    return RedirectResponse(destino, status_code=303)
+    return RedirectResponse("/reservas/", status_code=303)
 
 
 @router.get("/reservas/")
 def listar_reservas(
     request: Request,
-    user: dict = Depends(require_admin), db: Client = Depends(get_db),
+    user: dict = Depends(get_current_user), db: Client = Depends(get_db),
 ):
     reservas = (
         db.table("reservas")
