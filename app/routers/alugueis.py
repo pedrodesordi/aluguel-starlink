@@ -78,7 +78,7 @@ def criar(
     cliente_id: str = Form(...), equipamento_id: str = Form(...),
     data_inicio: str = Form(...), data_fim_prevista: str = Form(...),
     modalidade: str = Form(...), valor_contratado: str = Form(...),
-    valor_multa_dia: str = Form("0"),
+    valor_multa_dia: str = Form("0"), desconto: str = Form("0"),
     observacoes: str = Form(""),
     user: dict = Depends(get_current_user), db: Client = Depends(get_db),
 ):
@@ -110,10 +110,11 @@ def criar(
     aluguel = res.data[0]
 
     # Gera parcelas conforme modalidade
+    desc = max(0.0, float(desconto) if desconto else 0.0)
     if modalidade == "mensal":
-        gerar_parcelas_mensais(aluguel, db)
+        gerar_parcelas_mensais(aluguel, db, desconto=desc)
     else:
-        gerar_pagamento_diaria(aluguel, db)
+        gerar_pagamento_diaria(aluguel, db, desconto=desc)
 
     # Cria termo de responsabilidade
     db.table("termos_responsabilidade").insert({"aluguel_id": aluguel["id"]}).execute()
@@ -147,7 +148,8 @@ def editar(
     id: str, request: Request,
     data_inicio: str = Form(...), data_fim_prevista: str = Form(...),
     modalidade: str = Form(...), valor_contratado: str = Form(...),
-    valor_multa_dia: str = Form("0"), observacoes: str = Form(""),
+    valor_multa_dia: str = Form("0"), desconto: str = Form("0"),
+    observacoes: str = Form(""),
     user: dict = Depends(get_current_user), db: Client = Depends(get_db),
 ):
     try:
@@ -173,10 +175,11 @@ def editar(
     # Recriar pagamentos não pagos (exceto multas já lançadas)
     db.table("pagamentos").delete().eq("aluguel_id", id).in_("status", ["pendente", "vencido"]).neq("tipo", "multa").execute()
     aluguel_atualizado = db.table("alugueis").select("*").eq("id", id).execute().data[0]
+    desc = max(0.0, float(desconto) if desconto else 0.0)
     if modalidade == "mensal":
-        gerar_parcelas_mensais(aluguel_atualizado, db)
+        gerar_parcelas_mensais(aluguel_atualizado, db, desconto=desc)
     else:
-        gerar_pagamento_diaria(aluguel_atualizado, db)
+        gerar_pagamento_diaria(aluguel_atualizado, db, desconto=desc)
 
     _flash(request, "success", "Aluguel atualizado!")
     return RedirectResponse(f"/alugueis/{id}", status_code=303)

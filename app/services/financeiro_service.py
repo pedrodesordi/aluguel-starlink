@@ -12,7 +12,7 @@ def _proximo_mes(d: date) -> date:
     return d.replace(month=novo_mes, day=min(d.day, ultimo_dia))
 
 
-def gerar_parcelas_mensais(aluguel: dict, db: Client) -> None:
+def gerar_parcelas_mensais(aluguel: dict, db: Client, desconto: float = 0) -> None:
     inicio = date.fromisoformat(aluguel["data_inicio"])
     fim = date.fromisoformat(aluguel["data_fim_prevista"])
     parcelas = []
@@ -21,29 +21,35 @@ def gerar_parcelas_mensais(aluguel: dict, db: Client) -> None:
     while cursor <= fim:
         proximo = _proximo_mes(cursor)
         vencimento = min(proximo - timedelta(days=1), fim)
-        parcelas.append({
+        parcela: dict = {
             "aluguel_id": aluguel["id"],
             "descricao": f"Mensalidade {cursor.strftime('%m/%Y')} - Parcela {i}",
             "valor": float(aluguel["valor_contratado"]),
             "data_vencimento": str(vencimento),
             "status": "pendente",
             "tipo": "mensalidade",
-        })
+        }
+        if i == 1 and desconto > 0:
+            parcela["desconto"] = desconto
+        parcelas.append(parcela)
         cursor = proximo
         i += 1
     if parcelas:
         db.table("pagamentos").insert(parcelas).execute()
 
 
-def gerar_pagamento_diaria(aluguel: dict, db: Client) -> None:
-    db.table("pagamentos").insert({
+def gerar_pagamento_diaria(aluguel: dict, db: Client, desconto: float = 0) -> None:
+    pagamento: dict = {
         "aluguel_id": aluguel["id"],
         "descricao": f"Aluguel diário — {aluguel['data_inicio']} a {aluguel['data_fim_prevista']}",
         "valor": float(aluguel["valor_total_previsto"]),
         "data_vencimento": aluguel["data_fim_prevista"],
         "status": "pendente",
         "tipo": "diaria",
-    }).execute()
+    }
+    if desconto > 0:
+        pagamento["desconto"] = desconto
+    db.table("pagamentos").insert(pagamento).execute()
 
 
 def get_dashboard_stats(db: Client) -> dict:

@@ -79,6 +79,11 @@
           <input type="number" step="0.01" name="valor_multa_dia" class="form-control"
                  value="{{ aluguel.valor_multa_dia or 0 }}" min="0">
         </div>
+        <div class="col-md-4">
+          <label class="form-label">Desconto (R$)</label>
+          <input type="number" step="0.01" name="desconto" class="form-control"
+                 value="0" min="0">
+        </div>
         <div class="col-12">
           <label class="form-label">Observações</label>
           <textarea name="observacoes" class="form-control" rows="2">{{ aluguel.observacoes or '' }}</textarea>
