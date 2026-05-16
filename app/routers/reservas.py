@@ -180,12 +180,14 @@ def reserva_confirmada(token: str, request: Request, db: Client = Depends(get_db
 @router.post("/reservas/gerar/{equipamento_id}")
 def gerar_link(
     equipamento_id: str, request: Request,
-    user: dict = Depends(require_admin), db: Client = Depends(get_db),
+    user: dict = Depends(get_current_user), db: Client = Depends(get_db),
 ):
     res = db.table("reservas").insert({"equipamento_id": equipamento_id}).execute()
     token = res.data[0]["token"]
-    _flash(request, "success", f"LINK:{token}")
-    return RedirectResponse("/reservas/", status_code=303)
+    base = str(request.base_url).rstrip("/")
+    _flash(request, "success", f"Link de reserva gerado: {base}/reservas/{token}")
+    destino = "/reservas/" if user.get("perfil") == "admin" else "/equipamentos/"
+    return RedirectResponse(destino, status_code=303)
 
 
 @router.get("/reservas/")
