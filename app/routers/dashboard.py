@@ -89,6 +89,8 @@ def dashboard(request: Request, user: dict = Depends(get_current_user), db: Clie
         "lucro": [round(receita_por_mes[m] - despesa_mensal, 2) for m in meses],
     }
 
+    lucro_mes = grafico["lucro"][-1]
+
     flash = request.session.pop("flash", None)
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
@@ -99,4 +101,5 @@ def dashboard(request: Request, user: dict = Depends(get_current_user), db: Clie
         "flash": flash,
         "eventos_json": json.dumps(eventos),
         "grafico": grafico,
+        "lucro_mes": lucro_mes,
     })

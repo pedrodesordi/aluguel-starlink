@@ -90,6 +90,14 @@
       </div>
     </a>
   </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 h-100 {{ 'bg-success text-white' if lucro_mes >= 0 else 'bg-danger text-white' }}">
+      <div class="card-body text-center">
+        <div class="small opacity-75">Lucro do mês</div>
+        <div class="fs-3 fw-bold">{{ lucro_mes | brl }}</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 {% if vencimentos %}
