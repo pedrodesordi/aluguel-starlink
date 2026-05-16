@@ -80,19 +80,17 @@
           </td>
           <td>
             {% if r.status == 'preenchida' %}
-            {% if user.perfil == 'admin' %}
             <form method="post" action="/reservas/{{ r.id }}/confirmar" class="d-inline">
               <button class="btn btn-xs btn-success" onclick="return confirm('Confirmar e criar aluguel?')">
                 <i class="bi bi-check-lg"></i> Confirmar
               </button>
             </form>
+            {% if user.perfil == 'admin' %}
             <form method="post" action="/reservas/{{ r.id }}/cancelar" class="d-inline ms-1">
               <button class="btn btn-xs btn-outline-danger" onclick="return confirm('Cancelar reserva?')">
                 <i class="bi bi-x"></i>
               </button>
             </form>
-            {% else %}
-            <span class="badge bg-warning text-dark">Aguardando confirmação</span>
             {% endif %}
             {% elif r.status == 'confirmada' and r.aluguel_id %}
             <a href="/alugueis/{{ r.aluguel_id }}" class="btn btn-xs btn-outline-secondary">

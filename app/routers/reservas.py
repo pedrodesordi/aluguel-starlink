@@ -216,7 +216,7 @@ def listar_reservas(
 @router.post("/reservas/{id}/confirmar")
 def confirmar_reserva(
     id: str, request: Request,
-    user: dict = Depends(require_admin), db: Client = Depends(get_db),
+    user: dict = Depends(get_current_user), db: Client = Depends(get_db),
 ):
     reserva = db.table("reservas").select("*").eq("id", id).execute().data[0]
 
