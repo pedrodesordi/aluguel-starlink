@@ -52,13 +52,11 @@
             {% if user.perfil == 'admin' %}
             <a href="/equipamentos/{{ e.id }}/editar" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
             {% endif %}
-            {% if e.status == 'disponivel' %}
             <form method="post" action="/reservas/gerar/{{ e.id }}" class="d-inline">
               <button class="btn btn-sm btn-outline-primary" title="Gerar link de reserva">
                 <i class="bi bi-link-45deg"></i>
               </button>
             </form>
-            {% endif %}
           </td>
         </tr>
         {% else %}
