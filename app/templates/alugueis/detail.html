@@ -142,7 +142,7 @@
           </td>
           <td id="status-pag-{{ p.id }}">
             <span class="badge status-pag-{{ p.status }}">{{ p.status | title }}</span>
-            {% if p.status in ['pendente','vencido'] and user.perfil == 'admin' %}
+            {% if p.status in ['pendente','vencido'] %}
             <button class="btn btn-xs btn-outline-success ms-1"
                     data-bs-toggle="modal" data-bs-target="#modalPagar"
                     data-pag-id="{{ p.id }}" data-pag-target="status-pag-{{ p.id }}"

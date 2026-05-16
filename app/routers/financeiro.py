@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from app.templates_config import templates
 from supabase import Client
 
-from app.auth import require_admin
+from app.auth import require_admin, get_current_user
 from app.database import get_db
 
 router = APIRouter(tags=["financeiro"])
@@ -46,7 +46,7 @@ def marcar_pago(
     id: str, request: Request,
     formas_json: str = Form(""),
     desconto: float = Form(0),
-    user: dict = Depends(require_admin), db: Client = Depends(get_db),
+    user: dict = Depends(get_current_user), db: Client = Depends(get_db),
 ):
     desconto = max(0.0, desconto or 0.0)
     forma_labels = {"pix": "PIX", "cartao": "Cartão", "dinheiro": "Dinheiro"}
