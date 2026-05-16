@@ -125,6 +125,9 @@ def editar(
 
 @router.post("/{id}/excluir")
 def excluir(id: str, request: Request, user: dict = Depends(get_current_user), db: Client = Depends(get_db)):
+    if user.get("perfil") != "admin":
+        _flash(request, "danger", "Sem permissão para excluir clientes.")
+        return RedirectResponse("/clientes/", status_code=303)
     db.table("clientes").update({"ativo": False}).eq("id", id).execute()
     _flash(request, "success", "Cliente removido.")
     return RedirectResponse("/clientes/", status_code=303)

@@ -30,9 +30,11 @@
           <td>{{ c.cidade or '—' }}</td>
           <td class="text-end">
             <a href="/clientes/{{ c.id }}/editar" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+            {% if user.perfil == 'admin' %}
             <form method="post" action="/clientes/{{ c.id }}/excluir" class="d-inline" onsubmit="return confirmar('Remover {{ c.nome }}?')">
               <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
             </form>
+            {% endif %}
           </td>
         </tr>
         {% else %}
