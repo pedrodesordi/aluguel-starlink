@@ -33,8 +33,7 @@
         <tr>
           <th>Nº Série</th><th>Nº Starlink</th><th>Modelo</th>
           {% if user.perfil == 'admin' %}<th>Plano</th><th>Custo Mensal</th><th>Venc. Mensal.</th>{% endif %}
-          <th>Status</th>
-          {% if user.perfil == 'admin' %}<th></th>{% endif %}
+          <th>Status</th><th></th>
         </tr>
       </thead>
       <tbody>
@@ -49,9 +48,10 @@
           <td>{% if e.vencimento_mensalidade %}Dia {{ e.vencimento_mensalidade }}{% else %}—{% endif %}</td>
           {% endif %}
           <td><span class="badge status-{{ e.status }}">{{ e.status | title }}</span></td>
-          {% if user.perfil == 'admin' %}
           <td class="d-flex gap-1">
+            {% if user.perfil == 'admin' %}
             <a href="/equipamentos/{{ e.id }}/editar" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+            {% endif %}
             {% if e.status == 'disponivel' %}
             <form method="post" action="/reservas/gerar/{{ e.id }}" class="d-inline">
               <button class="btn btn-sm btn-outline-primary" title="Gerar link de reserva">
@@ -60,10 +60,9 @@
             </form>
             {% endif %}
           </td>
-          {% endif %}
         </tr>
         {% else %}
-        <tr><td colspan="{{ 8 if user.perfil == 'admin' else 4 }}" class="text-center text-muted py-3">Nenhum equipamento encontrado</td></tr>
+        <tr><td colspan="{{ 8 if user.perfil == 'admin' else 5 }}" class="text-center text-muted py-3">Nenhum equipamento encontrado</td></tr>
         {% endfor %}
       </tbody>
     </table>
