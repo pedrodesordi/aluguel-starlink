@@ -44,7 +44,13 @@ def listar(
         liquido_por_aluguel = {}
 
     for a in alugueis:
-        a["valor_liquido"] = liquido_por_aluguel.get(a["id"], 0.0)
+        valor_liquido = liquido_por_aluguel.get(a["id"], 0.0)
+        a["valor_liquido"] = valor_liquido
+        if a["modalidade"] == "diaria" and a.get("data_inicio") and a.get("data_fim_prevista"):
+            dias = (date.fromisoformat(a["data_fim_prevista"]) - date.fromisoformat(a["data_inicio"])).days or 1
+            a["valor_unitario_liquido"] = valor_liquido / dias
+        else:
+            a["valor_unitario_liquido"] = valor_liquido
         if a["status"] == "atrasado" and not a.get("data_fim_real"):
             a["multa_corrente"] = float(calcular_multa_corrente(a))
 
