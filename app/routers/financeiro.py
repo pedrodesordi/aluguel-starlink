@@ -44,15 +44,20 @@ def listar(
 def marcar_pago(
     id: str, request: Request,
     forma_pagamento: str = Form(None),
+    desconto: float = Form(0),
     user: dict = Depends(require_admin), db: Client = Depends(get_db),
 ):
-    update_data: dict = {"status": "pago", "data_pagamento": str(date.today())}
+    desconto = max(0.0, desconto or 0.0)
+    update_data: dict = {"status": "pago", "data_pagamento": str(date.today()), "desconto": desconto}
     if forma_pagamento:
         update_data["forma_pagamento"] = forma_pagamento
-    db.table("pagamentos").update(update_data).eq("id", id).execute()
+    pag = db.table("pagamentos").update(update_data).eq("id", id).execute().data[0]
     forma_labels = {"pix": "PIX", "cartao": "Cartão", "dinheiro": "Dinheiro"}
     forma_label = forma_labels.get(forma_pagamento or "", "")
     extra = f' <span class="text-muted small">{forma_label}</span>' if forma_label else ""
+    if desconto > 0:
+        liquido = float(pag["valor"]) - desconto
+        extra += f' <span class="text-danger small">-R$ {desconto:,.2f}</span> <span class="text-muted small">= R$ {liquido:,.2f}</span>'
     estornar = (
         f'<button class="btn btn-xs btn-outline-warning ms-1"'
         f' hx-post="/financeiro/pagamentos/{id}/estornar"'
@@ -72,6 +77,7 @@ def estornar_pagamento(
         "status": "pendente",
         "data_pagamento": None,
         "forma_pagamento": None,
+        "desconto": 0,
     }).eq("id", id).execute()
     pagar_btn = (
         f'<button class="btn btn-xs btn-outline-success ms-1"'
@@ -92,8 +98,8 @@ def relatorio(
         inicio = f"{ano}-{m:02d}-01"
         fim = f"{ano}-{m+1:02d}-01" if m < 12 else f"{ano+1}-01-01"
         pags = db.table("pagamentos").select("valor,status").gte("data_vencimento", inicio).lt("data_vencimento", fim).execute().data
-        recebido = sum(p["valor"] for p in pags if p["status"] == "pago")
-        pendente = sum(p["valor"] for p in pags if p["status"] in ("pendente", "vencido"))
+        recebido = sum(float(p["valor"]) - float(p.get("desconto") or 0) for p in pags if p["status"] == "pago")
+        pendente = sum(float(p["valor"]) for p in pags if p["status"] in ("pendente", "vencido"))
         meses.append({"mes": m, "recebido": recebido, "pendente": pendente, "total": recebido + pendente})
 
     return templates.TemplateResponse("financeiro/relatorio.html", {
