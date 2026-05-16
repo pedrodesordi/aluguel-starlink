@@ -38,6 +38,9 @@
           {% endif %}
           <dt class="col-sm-5">Valor</dt><dd class="col-sm-7">{{ aluguel.valor_contratado | brl }}{{ '/dia' if aluguel.modalidade == 'diaria' else '/mês' }}</dd>
           <dt class="col-sm-5">Total previsto</dt><dd class="col-sm-7">{{ aluguel.valor_total_previsto | brl }}</dd>
+          {% if valor_liquido < aluguel.valor_total_previsto %}
+          <dt class="col-sm-5">Total com desconto</dt><dd class="col-sm-7 fw-semibold text-success">{{ valor_liquido | brl }}</dd>
+          {% endif %}
           {% if aluguel.dias_atraso %}
           <dt class="col-sm-5 text-danger">Dias de atraso</dt><dd class="col-sm-7 text-danger">{{ aluguel.dias_atraso }} dias</dd>
           <dt class="col-sm-5 text-danger">Multa total</dt><dd class="col-sm-7 text-danger">{{ aluguel.valor_multa_total | brl }}</dd>

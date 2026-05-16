@@ -224,11 +224,16 @@ def detalhe(id: str, request: Request, user: dict = Depends(get_current_user), d
     if aluguel["status"] == "atrasado" and not aluguel.get("data_fim_real"):
         multa_corrente = float(calcular_multa_corrente(aluguel))
 
+    valor_liquido = sum(
+        float(p["valor"]) - float(p.get("desconto") or 0)
+        for p in pagamentos if p.get("tipo") != "multa"
+    )
+
     flash = request.session.pop("flash", None)
     return templates.TemplateResponse("alugueis/detail.html", {
         "request": request, "user": user, "aluguel": aluguel,
         "pagamentos": pagamentos, "termo": termo,
-        "multa_corrente": multa_corrente, "flash": flash,
+        "multa_corrente": multa_corrente, "valor_liquido": valor_liquido, "flash": flash,
     })
 
 

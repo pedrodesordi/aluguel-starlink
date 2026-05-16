@@ -29,7 +29,7 @@
         <dt class="col-sm-4">Nº de Série</dt><dd class="col-sm-8">{{ equipamento.numero_serie or '—' }}</dd>
         <dt class="col-sm-4">Início</dt><dd class="col-sm-8">{{ aluguel.data_inicio if aluguel else '—' }}</dd>
         <dt class="col-sm-4">Fim previsto</dt><dd class="col-sm-8">{{ aluguel.data_fim_prevista if aluguel else '—' }}</dd>
-        <dt class="col-sm-4">Valor</dt><dd class="col-sm-8">R$ {{ aluguel.valor_contratado if aluguel else '—' }}</dd>
+        <dt class="col-sm-4">Valor total</dt><dd class="col-sm-8">R$ {{ "%.2f"|format(valor_liquido if valor_liquido else aluguel.valor_total_previsto) if aluguel else '—' }}</dd>
       </dl>
     </div>
   </div>
