@@ -38,6 +38,9 @@ def criar_rapido(
     except ValidationError as e:
         erros = {err["loc"][0]: err["msg"] for err in e.errors()}
         return JSONResponse({"erro": erros}, status_code=422)
+    existente = db.table("clientes").select("id").eq("cpf", data.cpf).execute().data
+    if existente:
+        return JSONResponse({"erro": {"cpf": "CPF/CNPJ já cadastrado."}}, status_code=422)
     res = db.table("clientes").insert(data.model_dump(exclude_none=True)).execute()
     novo = res.data[0]
     return JSONResponse({"id": novo["id"], "nome": novo["nome"]})
@@ -67,6 +70,15 @@ def criar(
             "cliente": {"nome": nome, "cpf": cpf, "telefone": telefone, "email": email,
                         "endereco": endereco, "cidade": cidade, "estado": estado, "observacoes": observacoes},
             "erros": erros,
+        }, status_code=422)
+
+    existente = db.table("clientes").select("id").eq("cpf", data.cpf).execute().data
+    if existente:
+        return templates.TemplateResponse("clientes/form.html", {
+            "request": request, "user": user,
+            "cliente": {"nome": nome, "cpf": cpf, "telefone": telefone, "email": email,
+                        "endereco": endereco, "cidade": cidade, "estado": estado, "observacoes": observacoes},
+            "erros": {"cpf": "CPF/CNPJ já cadastrado para outro cliente."},
         }, status_code=422)
 
     db.table("clientes").insert(data.model_dump(exclude_none=True)).execute()
@@ -116,6 +128,15 @@ def editar(
             "cliente": {"id": id, "nome": nome, "cpf": cpf, "telefone": telefone, "email": email,
                         "endereco": endereco, "cidade": cidade, "estado": estado, "observacoes": observacoes},
             "erros": erros,
+        }, status_code=422)
+
+    existente = db.table("clientes").select("id").eq("cpf", data.cpf).neq("id", id).execute().data
+    if existente:
+        return templates.TemplateResponse("clientes/form.html", {
+            "request": request, "user": user,
+            "cliente": {"id": id, "nome": nome, "cpf": cpf, "telefone": telefone, "email": email,
+                        "endereco": endereco, "cidade": cidade, "estado": estado, "observacoes": observacoes},
+            "erros": {"cpf": "CPF/CNPJ já cadastrado para outro cliente."},
         }, status_code=422)
 
     db.table("clientes").update(data.model_dump(exclude_none=True)).eq("id", id).execute()
