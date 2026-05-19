@@ -19,7 +19,7 @@
   <h2>1. Dados do Locatário</h2>
   <table>
     <tr><th>Nome</th><td>{{ cliente.nome }}</td></tr>
-    <tr><th>CPF</th><td>{{ cliente.cpf }}</td></tr>
+    <tr><th>CPF/CNPJ</th><td>{{ cliente.cpf }}</td></tr>
     <tr><th>Telefone</th><td>{{ cliente.telefone or '—' }}</td></tr>
     <tr><th>Endereço</th><td>{{ cliente.endereco or '—' }}, {{ cliente.cidade or '' }} - {{ cliente.estado or '' }}</td></tr>
   </table>

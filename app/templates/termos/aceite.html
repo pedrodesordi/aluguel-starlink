@@ -24,7 +24,7 @@
       <h5 class="card-title">Dados do Contrato</h5>
       <dl class="row">
         <dt class="col-sm-4">Locatário</dt><dd class="col-sm-8">{{ cliente.nome or '—' }}</dd>
-        <dt class="col-sm-4">CPF</dt><dd class="col-sm-8">{{ cliente.cpf or '—' }}</dd>
+        <dt class="col-sm-4">CPF/CNPJ</dt><dd class="col-sm-8">{{ cliente.cpf or '—' }}</dd>
         <dt class="col-sm-4">Equipamento</dt><dd class="col-sm-8">{{ equipamento.modelo or '—' }}</dd>
         <dt class="col-sm-4">Nº de Série</dt><dd class="col-sm-8">{{ equipamento.numero_serie or '—' }}</dd>
         <dt class="col-sm-4">Início</dt><dd class="col-sm-8">{{ aluguel.data_inicio if aluguel else '—' }}</dd>

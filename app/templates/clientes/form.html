@@ -16,7 +16,7 @@
           {% if erros and erros.nome %}<div class="invalid-feedback">{{ erros.nome }}</div>{% endif %}
         </div>
         <div class="col-md-6">
-          <label class="form-label">CPF <span class="text-danger">*</span></label>
+          <label class="form-label">CPF / CNPJ <span class="text-danger">*</span></label>
           <input type="text" name="cpf" class="form-control cpf-mask {{ 'is-invalid' if erros and erros.cpf }}" value="{{ cliente.cpf or '' }}" placeholder="000.000.000-00" required>
           {% if erros and erros.cpf %}<div class="invalid-feedback">{{ erros.cpf }}</div>{% endif %}
         </div>

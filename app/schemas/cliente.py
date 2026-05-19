@@ -17,9 +17,11 @@ class ClienteCreate(BaseModel):
     @classmethod
     def formatar_cpf(cls, v: str) -> str:
         digits = re.sub(r"\D", "", v)
-        if len(digits) != 11:
-            raise ValueError("CPF deve ter 11 dígitos")
-        return f"{digits[:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:]}"
+        if len(digits) == 11:
+            return f"{digits[:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:]}"
+        elif len(digits) == 14:
+            return f"{digits[:2]}.{digits[2:5]}.{digits[5:8]}/{digits[8:12]}-{digits[12:]}"
+        raise ValueError("CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos")
 
     @field_validator("estado")
     @classmethod
