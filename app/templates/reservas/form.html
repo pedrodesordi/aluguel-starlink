@@ -134,7 +134,24 @@
 </div>
 
 <script>
-document.getElementById('cpf').addEventListener('blur', function() {
+function formatarCPF(v) {
+  v = v.replace(/\D/g, '').slice(0, 11);
+  if (v.length > 9) return v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+  if (v.length > 6) return v.replace(/(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
+  if (v.length > 3) return v.replace(/(\d{3})(\d{0,3})/, '$1.$2');
+  return v;
+}
+const cpfInput = document.getElementById('cpf');
+cpfInput.addEventListener('input', function() {
+  this.value = formatarCPF(this.value);
+});
+cpfInput.addEventListener('paste', function(e) {
+  e.preventDefault();
+  const texto = (e.clipboardData || window.clipboardData).getData('text');
+  this.value = formatarCPF(texto);
+});
+
+cpfInput.addEventListener('blur', function() {
   const cpf = this.value.replace(/\D/g, '');
   const status = document.getElementById('cpf-status');
   if (cpf.length < 11) return;
