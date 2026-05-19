@@ -79,6 +79,13 @@
             {{ r.expira_em[:16] | replace("T", " ") if r.expira_em else '—' }}
           </td>
           <td>
+            {% if r.status == 'aguardando' %}
+            <button class="btn btn-xs btn-outline-primary"
+                    onclick="copiarLinkLinha(this, '{{ request.base_url }}reservar/{{ r.token }}')"
+                    title="Copiar link do cliente">
+              <i class="bi bi-clipboard"></i>
+            </button>
+            {% endif %}
             {% if r.status == 'preenchida' %}
             <form method="post" action="/reservas/{{ r.id }}/confirmar" class="d-inline">
               <button class="btn btn-xs btn-success" onclick="return confirm('Confirmar e criar aluguel?')">
@@ -119,7 +126,25 @@ function copiarLink() {
   const el = document.getElementById('link-gerado');
   navigator.clipboard.writeText(el.value).then(() => {
     el.select();
-    alert('Link copiado!');
+    const btn = el.nextElementSibling;
+    btn.innerHTML = '<i class="bi bi-check-lg"></i> Copiado!';
+    btn.classList.replace('btn-outline-success', 'btn-success');
+    setTimeout(() => {
+      btn.innerHTML = '<i class="bi bi-clipboard"></i> Copiar';
+      btn.classList.replace('btn-success', 'btn-outline-success');
+    }, 2000);
+  });
+}
+
+function copiarLinkLinha(btn, url) {
+  navigator.clipboard.writeText(url).then(() => {
+    const icon = btn.querySelector('i');
+    icon.className = 'bi bi-check-lg';
+    btn.classList.replace('btn-outline-primary', 'btn-primary');
+    setTimeout(() => {
+      icon.className = 'bi bi-clipboard';
+      btn.classList.replace('btn-primary', 'btn-outline-primary');
+    }, 2000);
   });
 }
 </script>
