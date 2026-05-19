@@ -184,7 +184,8 @@ def gerar_link(
 ):
     res = db.table("reservas").insert({"equipamento_id": equipamento_id}).execute()
     token = res.data[0]["token"]
-    _flash(request, "success", f"LINK:{token}")
+    base = str(request.base_url).rstrip("/")
+    _flash(request, "success", f"LINK:{base}/reservar/{token}")
     return RedirectResponse("/reservas/", status_code=303)
 
 
@@ -203,8 +204,7 @@ def listar_reservas(
     flash = request.session.pop("flash", None)
     novo_link = None
     if flash and flash.get("msg", "").startswith("LINK:"):
-        token = flash["msg"].split("LINK:")[1]
-        novo_link = token
+        novo_link = flash["msg"][5:]  # URL completa após "LINK:"
         flash = None
     return templates.TemplateResponse("reservas/admin_list.html", {
         "request": request, "user": user,
