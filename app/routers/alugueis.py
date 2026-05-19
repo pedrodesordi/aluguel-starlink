@@ -230,7 +230,9 @@ def apagar(id: str, request: Request, user: dict = Depends(get_current_user), db
         _flash(request, "danger", "Só é possível apagar aluguéis cancelados.")
         return RedirectResponse(f"/alugueis/{id}", status_code=303)
 
+    db.table("pagamentos").delete().eq("aluguel_id", id).execute()
     db.table("termos_responsabilidade").delete().eq("aluguel_id", id).execute()
+    db.table("reservas").update({"aluguel_id": None}).eq("aluguel_id", id).execute()
     db.table("alugueis").delete().eq("id", id).execute()
 
     _flash(request, "success", "Aluguel apagado.")

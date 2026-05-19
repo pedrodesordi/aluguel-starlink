@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Form, Query, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from app.templates_config import templates
 from supabase import Client
 
@@ -28,6 +28,16 @@ def _check_expiry(reserva: dict, db: Client) -> bool:
 
 
 # ─── Rotas públicas (sem auth) ────────────────────────────────────────────────
+
+@router.get("/reservar/buscar-cliente")
+def buscar_cliente_por_cpf(cpf: str = Query(...), db: Client = Depends(get_db)):
+    cpf_limpo = "".join(c for c in cpf if c.isdigit())
+    res = db.table("clientes").select("nome,telefone,email,endereco,cidade,estado").eq("cpf", cpf_limpo).execute()
+    if not res.data:
+        return JSONResponse({})
+    c = res.data[0]
+    return JSONResponse({k: v for k, v in c.items() if v is not None})
+
 
 @router.get("/reservar/calcular-preco", response_class=HTMLResponse)
 def calcular_preco_publico(
@@ -79,7 +89,7 @@ def form_reserva(token: str, request: Request, db: Client = Depends(get_db)):
 def submeter_reserva(
     token: str, request: Request,
     nome: str = Form(...), cpf: str = Form(...),
-    telefone: str = Form(""), email: str = Form(""),
+    telefone: str = Form(...), email: str = Form(""),
     endereco: str = Form(""), cidade: str = Form(""), estado: str = Form(""),
     tipo_plano: str = Form(...),
     data_inicio: str = Form(...), data_fim_prevista: str = Form(...),
@@ -95,6 +105,12 @@ def submeter_reserva(
 
     if reserva["status"] != "aguardando" or _check_expiry(reserva, db):
         return templates.TemplateResponse("reservas/expirado.html", {"request": request})
+
+    if not telefone.strip():
+        return templates.TemplateResponse("reservas/form.html", {
+            "request": request, "reserva": reserva, "equipamento": reserva["equipamentos"],
+            "erros": {"telefone": "Telefone / WhatsApp é obrigatório."},
+        }, status_code=422)
 
     from datetime import date as date_type
     try:
@@ -148,7 +164,7 @@ def submeter_reserva(
         "status": "preenchida",
         "nome_cliente": nome,
         "cpf_cliente": cpf,
-        "telefone_cliente": telefone or None,
+        "telefone_cliente": telefone,
         "email_cliente": email or None,
         "endereco_cliente": endereco or None,
         "cidade_cliente": cidade or None,
