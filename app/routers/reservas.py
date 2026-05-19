@@ -184,8 +184,7 @@ def gerar_link(
 ):
     res = db.table("reservas").insert({"equipamento_id": equipamento_id}).execute()
     token = res.data[0]["token"]
-    base = str(request.base_url).rstrip("/")
-    _flash(request, "success", f"Link de reserva gerado: {base}/reservas/{token}")
+    _flash(request, "success", f"LINK:{token}")
     return RedirectResponse("/reservas/", status_code=303)
 
 
