@@ -32,7 +32,7 @@ def _check_expiry(reserva: dict, db: Client) -> bool:
 @router.get("/reservar/buscar-cliente")
 def buscar_cliente_por_cpf(cpf: str = Query(...), db: Client = Depends(get_db)):
     cpf_limpo = "".join(c for c in cpf if c.isdigit())
-    res = db.table("clientes").select("nome,telefone,email,endereco,cidade,estado").eq("cpf", cpf_limpo).execute()
+    res = db.table("clientes").select("nome,telefone,email,endereco,cidade,estado").eq("cpf", cpf_limpo).limit(1).execute()
     if not res.data:
         return JSONResponse({})
     c = res.data[0]

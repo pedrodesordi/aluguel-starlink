@@ -86,7 +86,7 @@
       <div class="card-body">
         <div class="row g-3">
           <div class="col-md-4">
-            <label class="form-label">CPF <span class="text-danger">*</span></label>
+            <label class="form-label">CPF / CNPJ <span class="text-danger">*</span></label>
             <div class="input-group">
               <input type="text" id="cpf" name="cpf" class="form-control" placeholder="000.000.000-00" required>
               <span class="input-group-text" id="cpf-status" style="min-width:2rem"></span>
@@ -135,7 +135,16 @@
 
 <script>
 function formatarCPF(v) {
-  v = v.replace(/\D/g, '').slice(0, 11);
+  v = v.replace(/\D/g, '').slice(0, 14);
+  if (v.length > 11) {
+    // CNPJ: 00.000.000/0000-00
+    if (v.length > 12) return v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, '$1.$2.$3/$4-$5');
+    if (v.length > 8)  return v.replace(/(\d{2})(\d{3})(\d{3})(\d{0,4})/, '$1.$2.$3/$4');
+    if (v.length > 5)  return v.replace(/(\d{2})(\d{3})(\d{0,3})/, '$1.$2.$3');
+    if (v.length > 2)  return v.replace(/(\d{2})(\d{0,3})/, '$1.$2');
+    return v;
+  }
+  // CPF: 000.000.000-00
   if (v.length > 9) return v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
   if (v.length > 6) return v.replace(/(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
   if (v.length > 3) return v.replace(/(\d{3})(\d{0,3})/, '$1.$2');
@@ -154,7 +163,7 @@ cpfInput.addEventListener('paste', function(e) {
 cpfInput.addEventListener('blur', function() {
   const cpf = this.value.replace(/\D/g, '');
   const status = document.getElementById('cpf-status');
-  if (cpf.length < 11) return;
+  if (cpf.length !== 11 && cpf.length !== 14) return;
   status.innerHTML = '<span class="spinner-border spinner-border-sm text-secondary"></span>';
   fetch(`/reservar/buscar-cliente?cpf=${cpf}`)
     .then(r => r.json())
